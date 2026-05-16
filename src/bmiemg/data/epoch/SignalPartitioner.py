@@ -43,14 +43,14 @@ class SignalPartitioner:
 
         # 3. Build the epochs
         epochs = mne.Epochs(
-                raw=raw,
-                events=events,
-                event_id=event_id,
-                tmin=-0.5,
-                tmax=movement_duration,
-                baseline=(-0.5, 0),
-                preload=True,
-            )
+            raw=raw,
+            events=events,
+            event_id=event_id,
+            tmin=-0.5,
+            tmax=movement_duration,
+            baseline=(-0.5, 0),
+            preload=True,
+        )
 
         return epochs
 

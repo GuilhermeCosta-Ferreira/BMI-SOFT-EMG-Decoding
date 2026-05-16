@@ -59,6 +59,84 @@ def wamp(x: np.ndarray, threshold: float = 20e-6) -> np.ndarray:
     dx = np.abs(np.diff(x, axis=2))
     return np.sum(dx > threshold, axis=2)
 
+def iav(x: np.ndarray) -> np.ndarray:
+    """Integrated absolute value."""
+    return np.sum(np.abs(x), axis=2)
+
+def ssi(x: np.ndarray) -> np.ndarray:
+    """Simple square integral."""
+    return np.sum(x**2, axis=2)
+
+def aac(x: np.ndarray) -> np.ndarray:
+    """
+    Average amplitude change.
+
+    Similar to waveform length, but normalized by window length.
+    """
+    return np.mean(np.abs(np.diff(x, axis=2)), axis=2)
+
+def dasdv(x: np.ndarray) -> np.ndarray:
+    """
+    Difference absolute standard deviation value.
+
+    RMS of the first difference.
+    """
+    dx = np.diff(x, axis=2)
+    return np.sqrt(np.mean(dx**2, axis=2))
+
+def ptp_amp(x: np.ndarray) -> np.ndarray:
+    """Peak-to-peak amplitude."""
+    return np.max(x, axis=2) - np.min(x, axis=2)
+
+def median_abs(x: np.ndarray) -> np.ndarray:
+    """Median absolute value."""
+    return np.median(np.abs(x), axis=2)
+
+def iqr(x: np.ndarray) -> np.ndarray:
+    """Interquartile range."""
+    q75 = np.percentile(x, 75, axis=2)
+    q25 = np.percentile(x, 25, axis=2)
+    return q75 - q25
+
+def myop(x: np.ndarray, threshold: float = 20e-6) -> np.ndarray:
+    """
+    Myopulse percentage rate.
+
+    Fraction of samples whose absolute value exceeds a threshold.
+    Threshold assumes signal is in volts.
+    """
+    return np.mean(np.abs(x) > threshold, axis=2)
+
+def hjorth_mobility(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    """
+    Hjorth mobility.
+
+    Measures relative amount of signal variation.
+    """
+    dx = np.diff(x, axis=2)
+
+    var_x = np.var(x, axis=2)
+    var_dx = np.var(dx, axis=2)
+
+    return np.sqrt(var_dx / np.maximum(var_x, eps))
+
+def hjorth_complexity(x: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    """
+    Hjorth complexity.
+
+    Measures how much the signal shape changes compared with a pure sine-like signal.
+    """
+    dx = np.diff(x, axis=2)
+    ddx = np.diff(dx, axis=2)
+
+    var_x = np.var(x, axis=2)
+    var_dx = np.var(dx, axis=2)
+    var_ddx = np.var(ddx, axis=2)
+
+    mobility_x = np.sqrt(var_dx / np.maximum(var_x, eps))
+    mobility_dx = np.sqrt(var_ddx / np.maximum(var_dx, eps))
+
+    return mobility_dx / np.maximum(mobility_x, eps)
 
 
 # ================================================================
@@ -134,6 +212,16 @@ TIME_FEATURE_FUNCTIONS = [
     zc,
     log_det,
     wamp,
+    iav,
+    ssi,
+    aac,
+    dasdv,
+    ptp_amp,
+    median_abs,
+    iqr,
+    myop,
+    hjorth_mobility,
+    hjorth_complexity,
 ]
 
 FREQ_FEATURE_FUNCTIONS = [
