@@ -33,6 +33,7 @@ def clean_marker(desc) -> str:
         .strip()
     )
 
+
 def time_from_marker_to_next(raw, target_marker: str = "32101") -> pd.DataFrame:
     annotations = raw.annotations
 

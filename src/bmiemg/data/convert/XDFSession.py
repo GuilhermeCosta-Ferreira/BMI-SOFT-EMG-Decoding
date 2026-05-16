@@ -7,7 +7,6 @@ from pathlib import Path
 from .streams import SignalStream, MarkerStream
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

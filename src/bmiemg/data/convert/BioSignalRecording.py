@@ -6,7 +6,6 @@ import mne
 from dataclasses import dataclass
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -20,10 +19,7 @@ class BioSignalRecording:
         eeg_annotated = attach(self.eeg_raw, self.annotations)
         emg_annotated = attach(self.emg_raw, self.annotations)
 
-        return {
-            "EEG": eeg_annotated,
-            "EMG": emg_annotated
-        }
+        return {"EEG": eeg_annotated, "EMG": emg_annotated}
 
 
 # ──────────────────────────────────────────────────────

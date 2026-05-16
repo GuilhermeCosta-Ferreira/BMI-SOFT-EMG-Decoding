@@ -7,5 +7,5 @@ __all__ = [
     "TriggerMap",
     "V1_TRIGGER_MAP",
     "V2_TRIGGER_MAP",
-    "average_movement_duration"
+    "average_movement_duration",
 ]

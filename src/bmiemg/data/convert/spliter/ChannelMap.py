@@ -4,7 +4,6 @@
 from dataclasses import dataclass
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -18,7 +17,7 @@ class ChannelMap:
 # 1.1 Subsection: Deafult Setups
 # ──────────────────────────────────────────────────────
 BIOTECH_MAP: ChannelMap = ChannelMap(
-    emg_ch_names = [
+    emg_ch_names=[
         "AUX7",
         "AUX8",
         "AUX9",
@@ -26,7 +25,7 @@ BIOTECH_MAP: ChannelMap = ChannelMap(
         "AUX11",
         "AUX12",
     ],
-    eeg_ch_names = [
+    eeg_ch_names=[
         "FP1",
         "FPZ",
         "FP2",
@@ -90,6 +89,6 @@ BIOTECH_MAP: ChannelMap = ChannelMap(
         "TP8",
         "PO7",
         "PO8",
-        "OZ"
+        "OZ",
     ],
 )

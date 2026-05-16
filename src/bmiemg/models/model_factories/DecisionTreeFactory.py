@@ -7,7 +7,6 @@ from sklearn.tree import DecisionTreeClassifier
 from .ModelFactory import ModelFactory
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -21,5 +20,5 @@ class DecisionTreeFactory(ModelFactory):
         return DecisionTreeClassifier(
             random_state=self.random_state,
             class_weight=self.class_weight,
-            max_depth=self.max_depth
+            max_depth=self.max_depth,
         )

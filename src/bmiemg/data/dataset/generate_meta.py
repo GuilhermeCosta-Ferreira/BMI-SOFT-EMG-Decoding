@@ -13,7 +13,6 @@ from pathlib import Path
 from datetime import date, datetime
 
 
-
 # ================================================================
 # 1. Section: Dataset saving
 # ================================================================
@@ -59,7 +58,6 @@ def save_epochs_metadata(
     return metadata
 
 
-
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
@@ -81,15 +79,13 @@ def _json_safe(value) -> Any:
         return value.tolist()
 
     if isinstance(value, dict):
-        return {
-            str(k): _json_safe(v)
-            for k, v in value.items()
-        }
+        return {str(k): _json_safe(v) for k, v in value.items()}
 
     if isinstance(value, (list, tuple, set)):
         return [_json_safe(v) for v in value]
 
     return value
+
 
 def build_epochs_metadata(
     epochs: mne.Epochs,
@@ -168,6 +164,7 @@ def build_epochs_metadata(
         metadata["extra"] = extra
 
     return _json_safe(metadata)
+
 
 def make_dataset_readme(metadata: dict) -> str:
     """Create a compact Markdown README from dataset metadata."""
@@ -251,6 +248,7 @@ def make_dataset_readme(metadata: dict) -> str:
 
     {chr(10).join(f"- {note}" for note in metadata["notes"])}
     """
+
 
 """
 metadata = save_epochs_dataset(

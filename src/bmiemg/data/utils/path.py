@@ -6,15 +6,11 @@ from datetime import datetime, date
 from pathlib import Path
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 def get_xdf_paths(
-    ignore_set: set,
-    period: str,
-    data_path: Path,
-    cutoff_date: date
+    ignore_set: set, period: str, data_path: Path, cutoff_date: date
 ) -> list:
     period = period.lower()
 

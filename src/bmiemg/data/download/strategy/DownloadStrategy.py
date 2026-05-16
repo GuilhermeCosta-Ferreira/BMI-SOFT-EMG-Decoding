@@ -11,7 +11,6 @@ from ..Credentials import Credentials
 from ..Request import Request
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

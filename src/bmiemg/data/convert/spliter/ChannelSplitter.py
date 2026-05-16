@@ -14,7 +14,6 @@ from ..BioSignalRecording import BioSignalRecording
 from .ChannelMap import ChannelMap, BIOTECH_MAP
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -53,8 +52,6 @@ class ChannelSplitter:
         annotations = session.marker_stream.to_annotation()
 
         return BioSignalRecording(eeg_raw, emg_raw, annotations)
-
-
 
 
 # ──────────────────────────────────────────────────────

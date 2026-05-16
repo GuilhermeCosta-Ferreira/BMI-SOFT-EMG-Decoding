@@ -5,14 +5,13 @@ import os
 
 from pathlib import Path
 
-#from .BIDSLoader import BIDSLoader
-
+# from .BIDSLoader import BIDSLoader
 
 
 # ================================================================
 # 1. Section: Build File and Foulder Path
 # ================================================================
-def build_file_name (bids) -> str:
+def build_file_name(bids) -> str:
     file_name = f"sub-{bids.subject}"
     if bids.session:
         file_name += f"_ses-{bids.session}"
@@ -25,6 +24,7 @@ def build_file_name (bids) -> str:
 
     return file_name
 
+
 def build_foulder(bids) -> Path:
     subj_dir = bids.data_dir / f"sub-{bids.subject}"
     if bids.session:
@@ -32,6 +32,8 @@ def build_foulder(bids) -> Path:
     emg_dir = subj_dir / "emg"
 
     if not os.path.exists(emg_dir):
-        raise FileNotFoundError(f"No EMG folder for subject {bids.subject}, session {bids.session}")
+        raise FileNotFoundError(
+            f"No EMG folder for subject {bids.subject}, session {bids.session}"
+        )
 
     return emg_dir

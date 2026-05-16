@@ -9,5 +9,5 @@ __all__ = [
     "ModelRegistry",
     "Trainer",
     "Evaluator",
-    "ClassifierEstimator"
+    "ClassifierEstimator",
 ]

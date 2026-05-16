@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from .ClassifierEstimator import ClassifierEstimator
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

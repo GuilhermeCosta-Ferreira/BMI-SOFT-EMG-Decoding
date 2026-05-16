@@ -15,7 +15,6 @@ from .archive_vars import (
 )
 
 
-
 # ================================================================
 # 1. Section: Path/Content Functions
 # ================================================================
@@ -24,6 +23,7 @@ def dav_url(dav_root: str, remote_path: str) -> str:
     if remote_path:
         return f"{dav_root}/{quote(remote_path)}"
     return dav_root
+
 
 def propfind(url: str, auth: HTTPBasicAuth, depth: int | str = 1) -> str:
     r = requests.request(
@@ -35,6 +35,7 @@ def propfind(url: str, auth: HTTPBasicAuth, depth: int | str = 1) -> str:
     )
     r.raise_for_status()
     return r.text
+
 
 def parse_propfind(xml_text: str):
     root = ET.fromstring(xml_text)
@@ -51,14 +52,20 @@ def parse_propfind(xml_text: str):
             continue
 
         resourcetype = prop.find("d:resourcetype", NAMESPACES)
-        is_dir = resourcetype is not None and resourcetype.find("d:collection", NAMESPACES) is not None
+        is_dir = (
+            resourcetype is not None
+            and resourcetype.find("d:collection", NAMESPACES) is not None
+        )
 
-        items.append({
-            "href": unquote(str(href.text)),
-            "is_dir": is_dir,
-        })
+        items.append(
+            {
+                "href": unquote(str(href.text)),
+                "is_dir": is_dir,
+            }
+        )
 
     return items
+
 
 def remote_relative_path(dav_user: str, href: str) -> str:
     parsed = urlparse(href)
@@ -66,7 +73,7 @@ def remote_relative_path(dav_user: str, href: str) -> str:
 
     prefix = f"/remote.php/dav/files/{dav_user}/"
     if path.startswith(prefix):
-        return path[len(prefix):].strip("/")
+        return path[len(prefix) :].strip("/")
 
     prefix_no_slash = f"/remote.php/dav/files/{dav_user}"
     if path == prefix_no_slash:
@@ -75,11 +82,12 @@ def remote_relative_path(dav_user: str, href: str) -> str:
     raise ValueError(f"Unexpected href: {href}")
 
 
-
 # ================================================================
 # 2. Section: Download Functions
 # ================================================================
-def download_file(auth: HTTPBasicAuth, dav_root: str, remote_path: str, local_path: str) -> None:
+def download_file(
+    auth: HTTPBasicAuth, dav_root: str, remote_path: str, local_path: str
+) -> None:
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     url = dav_url(dav_root, remote_path)
 
@@ -89,7 +97,6 @@ def download_file(auth: HTTPBasicAuth, dav_root: str, remote_path: str, local_pa
             for chunk in r.iter_content(chunk_size=1024 * 1024):
                 if chunk:
                     f.write(chunk)
-
 
 
 # ================================================================
@@ -109,11 +116,11 @@ def extract_path_of_interest(rel_path: str, server_path: str) -> str:
     # It prefers longer contiguous matches first.
     for end in range(len(server_parts), 0, -1):
         for length in range(end, 0, -1):
-            candidate = server_parts[end - length:end]
+            candidate = server_parts[end - length : end]
 
             for start in range(len(rel_parts) - length, -1, -1):
-                if rel_parts[start:start + length] == candidate:
-                    return "/".join(rel_parts[start + length:])
+                if rel_parts[start : start + length] == candidate:
+                    return "/".join(rel_parts[start + length :])
 
     raise ValueError(
         f"No folder from server_path was found in rel_path:\n"

@@ -11,7 +11,6 @@ from .TriggerMap import TriggerMap
 from .duration import average_movement_duration
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -26,16 +25,13 @@ class SignalPartitioner:
     ) -> mne.Epochs:
         # 1. Get all the movement labels present on the signal
         movement_labels = get_labels_at_position(
-            raw,
-            self.trigger_map.movement_id[0],
-            self.trigger_map.movement_id[1]
+            raw, self.trigger_map.movement_id[0], self.trigger_map.movement_id[1]
         )
 
         # 2. Get only that signal
         event_id_map = build_event_dict(movement_labels)
         events, event_id = mne.events_from_annotations(
-            raw=raw,
-            event_id=event_id_map # type: ignore[arg-type]
+            raw=raw, event_id=event_id_map  # type: ignore[arg-type]
         )
 
         # 2.1 Inform on trial duration
@@ -67,10 +63,7 @@ class SignalPartitioner:
         rest_code = len(grouped_event_id) + 1
         grouped_event_id[rest_label] = rest_code
 
-        code_to_label = {
-            code: label
-            for label, code in epochs.event_id.items()
-        }
+        code_to_label = {code: label for label, code in epochs.event_id.items()}
 
         X = epochs.get_data(copy=True)
         old_events = epochs.events.copy()
@@ -78,10 +71,7 @@ class SignalPartitioner:
         keep_indices: list[int] = []
         new_event_codes: list[int] = []
 
-        group_counts = {
-            group_name: 0
-            for group_name in grouped_event_id.keys()
-        }
+        group_counts = {group_name: 0 for group_name in grouped_event_id.keys()}
 
         for i, event in enumerate(old_events):
             old_code = int(event[-1])
@@ -147,19 +137,25 @@ class SignalPartitioner:
 def get_labels_at_position(signal: mne.io.RawArray, pos: int, key: int) -> list:
     key_str = str(key)
 
-    return sorted({
-        desc for desc in signal.annotations.description
-        if str(desc)[pos:pos + len(key_str)] == key_str
-    })
+    return sorted(
+        {
+            desc
+            for desc in signal.annotations.description
+            if str(desc)[pos : pos + len(key_str)] == key_str
+        }
+    )
+
 
 def build_event_dict(labels: list) -> dict[str, int]:
     return {label: int(label) for label in labels}
+
 
 def get_movement_code(marker: str) -> int:
     marker = str(marker).strip()
 
     # Last two digits are the movement code
     return int(marker[-2:])
+
 
 def clean_marker(label) -> str:
     return (
@@ -170,6 +166,7 @@ def clean_marker(label) -> str:
         .replace('"', "")
         .strip()
     )
+
 
 def movement_suffix(label: str) -> int:
     """

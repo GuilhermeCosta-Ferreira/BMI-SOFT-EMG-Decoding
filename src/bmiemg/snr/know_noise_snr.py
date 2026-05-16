@@ -6,7 +6,6 @@ import numpy as np
 from .SNR import SNR
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -15,8 +14,12 @@ def known_noise(
     sig_dt: tuple[int, int],
     noi_dt: tuple[int, int],
 ) -> SNR:
-    signal = data_df.loc[(data_df['Time'] >= sig_dt[0]) & (data_df['Time'] < sig_dt[1])].copy()
-    noise  = data_df.loc[(data_df['Time'] >= noi_dt[0]) & (data_df['Time'] < noi_dt[1])].copy()
+    signal = data_df.loc[
+        (data_df["Time"] >= sig_dt[0]) & (data_df["Time"] < sig_dt[1])
+    ].copy()
+    noise = data_df.loc[
+        (data_df["Time"] >= noi_dt[0]) & (data_df["Time"] < noi_dt[1])
+    ].copy()
 
     snr_list = []
     snr_dict = {}
@@ -37,15 +40,13 @@ def known_noise(
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
-def compute_snr(
-    signal: np.ndarray,
-    noise: np.ndarray
-) -> float:
+def compute_snr(signal: np.ndarray, noise: np.ndarray) -> float:
     rms_signal = compute_rms(signal)
     rms_noise = compute_rms(noise)
 
-    snr = 20*np.log10(rms_signal/rms_noise)
+    snr = 20 * np.log10(rms_signal / rms_noise)
     return snr
+
 
 def compute_rms(signal: np.ndarray) -> float:
     rms = np.sqrt(np.mean(signal**2))

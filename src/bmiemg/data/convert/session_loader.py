@@ -8,7 +8,6 @@ from .streams import SignalStream, MarkerStream
 from .XDFSession import XDFSession
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
