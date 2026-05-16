@@ -37,7 +37,7 @@ SESSIONS_TO_IGNORE_V2: set = set([])
 CUTOFF_DATE = date(2025, 11, 21)
 
 DATASET_PATH: Path = ROOT / "data" / "dataset"
-DATASET_NAME: str = "naive_archive_eeg"
+DATASET_NAME: str = "naive_archive_sensible"
 
 
 
@@ -56,7 +56,7 @@ def load_emg_sessions(
             session = session_load(file)
             bio_signal = splitter.split(session)
             signal = bio_signal.attach_annotations()
-            emg_signals.append(signal["EEG"])
+            emg_signals.append(signal["EMG"])
 
         del(bio_signal)
         del(signal)

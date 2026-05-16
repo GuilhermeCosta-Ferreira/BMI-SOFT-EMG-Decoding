@@ -41,7 +41,7 @@ from bmiemg.models import (
 ROOT: Path = Path(__file__).resolve().parents[2]
 DATA: Path = ROOT / "data" / "bids"
 DATASET_ROOT: Path = ROOT / "data" / "dataset"
-DATASET: Path = DATASET_ROOT / "naive_archive_2026-05-12_epo.fif"
+DATASET: Path = DATASET_ROOT / "naive_archive_sensible_2026-05-16_epo.fif"
 
 # 1.2 Preprocessing
 WINDOW_SIZE: float = 0.1
@@ -63,13 +63,13 @@ TO_SAVE: bool = True
 # ================================================================
 if __name__ == "__main__":
     # 1. Loads the Dataset
-    epochs = mne.read_epochs(DATASET, preload=True)
+    envelop_epochs = mne.read_epochs(DATASET, preload=True)
 
     # 2. Extract the envelop for only 4 channels
-    envelop_epochs = get_envelop(
-        cast(mne.EpochsArray, epochs),
-        window_s=WINDOW_SIZE,
-    )
+    #envelop_epochs = get_envelop(
+    #    cast(mne.EpochsArray, epochs),
+    #    window_s=WINDOW_SIZE,
+    #)
     #envelop_epochs = envelop_epochs.copy().pick(['AUX7', 'AUX12', 'AUX8', 'AUX11'])
     envelop_epochs = envelop_epochs.copy().pick(['AUX12'])
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
         out_path = Path("data/models")
         os.makedirs(out_path, exist_ok=True)
-        file_name = out_path / f"{model}_vs_all_1ch_aux12_no_freq"
+        file_name = out_path / f"{model}_vs_all_1ch_scale_no_freq_no_envelop_sensible"
 
         print("Mean accuracy after pruning:", result.mean_score)
 
@@ -155,3 +155,6 @@ if __name__ == "__main__":
         print()
 
     print(np.unique(best_features))
+    print(['log_det', 'mav', 'maxav', 'rms', 'ssc', 'std', 'wl'])
+    print(f"Features min: {np.min(selected_features, axis=0)}")
+    print(f"Features max: {np.max(selected_features, axis=0)}")

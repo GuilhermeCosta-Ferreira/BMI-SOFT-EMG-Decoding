@@ -4,6 +4,7 @@
 import mne
 
 import numpy as np
+import pandas as pd
 
 from dataclasses import dataclass
 
@@ -47,6 +48,18 @@ class SignalPartitioner:
             baseline=(-0.5, 0),
             preload=True,
         )
+        epochs.apply_function(
+            lambda x: x + 2000,
+            picks="all",
+            channel_wise=True,
+        )
+        """epochs = split_epochs_into_windows(
+            epochs,
+            window_s=0.200,
+            step_s=0.100,
+            tmin=0.0,
+            tmax=None,
+        )"""
 
         return epochs
 
@@ -186,3 +199,103 @@ def movement_suffix(label: str) -> int:
         raise ValueError(f"Marker suffix is not numeric: {label}")
 
     return int(suffix)
+
+def split_epochs_into_windows(
+    epochs: mne.Epochs | mne.EpochsArray,
+    window_s: float = 0.100,
+    step_s: float | None = None,
+    tmin: float | None = None,
+    tmax: float | None = None,
+) -> mne.EpochsArray:
+    """
+    Split each epoch into fixed-length time windows.
+
+    Parameters
+    ----------
+    epochs:
+        Input MNE epochs.
+    window_s:
+        Window length in seconds.
+    step_s:
+        Step size in seconds. If None, uses non-overlapping windows.
+    tmin:
+        Optional start time inside each epoch.
+        Example: tmin=0.0 to ignore the baseline period.
+    tmax:
+        Optional end time inside each epoch.
+
+    Returns
+    -------
+    windowed_epochs:
+        New EpochsArray where each epoch is one window.
+    """
+
+    data = epochs.get_data()
+    sfreq = epochs.info["sfreq"]
+    times = epochs.times
+
+    if step_s is None:
+        step_s = window_s
+
+    window_samples = int(round(window_s * sfreq))
+    step_samples = int(round(step_s * sfreq))
+
+    if window_samples <= 0:
+        raise ValueError("window_s is too small.")
+    if step_samples <= 0:
+        raise ValueError("step_s is too small.")
+
+    # Select time range inside each epoch
+    mask = np.ones(len(times), dtype=bool)
+
+    if tmin is not None:
+        mask &= times >= tmin
+
+    if tmax is not None:
+        mask &= times < tmax
+
+    data = data[:, :, mask]
+
+    n_epochs, n_channels, n_times = data.shape
+
+    windows = []
+    labels = []
+    original_epoch_idx = []
+    window_idx = []
+
+    for epoch_idx in range(n_epochs):
+        current_window_idx = 0
+
+        for start in range(0, n_times - window_samples + 1, step_samples):
+            stop = start + window_samples
+
+            windows.append(data[epoch_idx, :, start:stop])
+            labels.append(epochs.events[epoch_idx, 2])
+            original_epoch_idx.append(epoch_idx)
+            window_idx.append(current_window_idx)
+
+            current_window_idx += 1
+
+    windows = np.asarray(windows)
+    labels = np.asarray(labels, dtype=int)
+
+    # Fake events for the new windowed epochs
+    events = np.column_stack([
+        np.arange(len(windows)),
+        np.zeros(len(windows), dtype=int),
+        labels,
+    ])
+
+    windowed_epochs = mne.EpochsArray(
+        data=windows,
+        info=epochs.info.copy(),
+        events=events,
+        event_id=epochs.event_id,
+        tmin=0.0,
+        metadata = pd.DataFrame({
+            "original_epoch": original_epoch_idx,
+            "window_idx": window_idx,
+        })
+    )
+
+    return windowed_epochs

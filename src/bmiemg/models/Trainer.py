@@ -51,4 +51,6 @@ class Trainer:
             scores=scores,
             mean_score=float(scores.mean()),
             std_score=float(scores.std()),
+            channel_names=[],
+            feature_names=[]
         )

@@ -26,6 +26,8 @@ class ChannelSplitter:
         signal_stream = session.signal_stream
         channel_names = signal_stream.channel_names
 
+        print(session.signal_stream.raw_stream["info"]["desc"][0]["channels"][0])
+
         # 1. Get the channel index where each modality lives
         eeg_idx = np.flatnonzero(np.isin(channel_names, self.ch_map.eeg_ch_names))
         emg_idx = np.flatnonzero(np.isin(channel_names, self.ch_map.emg_ch_names))

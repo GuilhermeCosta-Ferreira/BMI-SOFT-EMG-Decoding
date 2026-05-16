@@ -17,3 +17,8 @@ class ClassifierEstimator(Protocol):
         X: np.ndarray,
         y: np.ndarray,
     ) -> Self: ...
+
+    def predict(
+        self,
+        X: np.ndarray
+    ) -> np.ndarray: ...

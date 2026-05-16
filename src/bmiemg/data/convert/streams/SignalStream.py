@@ -43,7 +43,7 @@ class SignalStream(Stream):
                 "To raw only works when the signal is mono (only one modality)"
             )
 
-        data = (self.time_series * 1e-6).T
+        data = (self.time_series / 2).T
 
         mne_info = mne.create_info(
             ch_names=list(self.channel_names),
