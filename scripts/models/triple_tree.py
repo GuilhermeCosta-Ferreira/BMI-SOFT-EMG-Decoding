@@ -42,6 +42,8 @@ ROOT: Path = Path(__file__).resolve().parents[2]
 DATA: Path = ROOT / "data" / "bids"
 DATASET_ROOT: Path = ROOT / "data" / "dataset"
 DATASET: Path = DATASET_ROOT / "naive_archive_sensible_2026-05-16_epo.fif"
+MODEL_SUFFIX: str = "eeg_model"
+#vs_all_6ch_scale_no_freq_no_envelop_sensible
 
 # 1.2 Preprocessing
 WINDOW_SIZE: float = 0.1
@@ -71,7 +73,7 @@ if __name__ == "__main__":
     #    window_s=WINDOW_SIZE,
     #)
     #envelop_epochs = envelop_epochs.copy().pick(['AUX7', 'AUX12', 'AUX8', 'AUX11'])
-    envelop_epochs = envelop_epochs.copy().pick(['AUX12'])
+    #envelop_epochs = envelop_epochs.copy().pick(['AUX12'])
 
     # 3. Extract the features
     features = get_emg_features(
@@ -115,6 +117,7 @@ if __name__ == "__main__":
         )
         clf = result.estimator
 
+        """
         selected_indices = prune(
             envelop_epochs,
             list(np.concat([TIME_FEATURE_FUNCTIONS, FREQ_FEATURE_FUNCTIONS], axis=0)),
@@ -122,14 +125,15 @@ if __name__ == "__main__":
             ['log_det', 'mav', 'maxav', 'rms', 'ssc', 'std', 'wl'],
         )
         selected_features = features[:, selected_indices]
-        """selected_features, feature_names = prune_features(
+        """
+        selected_features, feature_names = prune_features(
             envelop_epochs,
             features,
             list(np.concat([TIME_FEATURE_FUNCTIONS, FREQ_FEATURE_FUNCTIONS], axis=0)),
             cast(DecisionTreeClassifier, clf),
         )
         best_features.append(feature_names)
-        print(f"Feature names {feature_names}")"""
+        print(f"Feature names {feature_names}")
         print("Original:", features.shape)
         print("Selected:", selected_features.shape)
 
@@ -143,7 +147,7 @@ if __name__ == "__main__":
 
         out_path = Path("data/models")
         os.makedirs(out_path, exist_ok=True)
-        file_name = out_path / f"{model}_vs_all_1ch_scale_no_freq_no_envelop_sensible"
+        file_name = out_path / f"{model}_{MODEL_SUFFIX}"
 
         print("Mean accuracy after pruning:", result.mean_score)
 
