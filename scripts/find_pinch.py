@@ -28,12 +28,13 @@ from bmiemg.data.epoch import (
 # 1. Section: INPUTS
 # ================================================================
 # Paths
-ROOT: Path = Path(__file__).resolve().parents[2]
+ROOT: Path = Path(__file__).resolve().parents[1]
 DATA: Path = ROOT / "data" / "bids"
 
 # Version relative inputs
 SESSIONS_TO_IGNORE_V1: set = set([
-    "sub-05_ses-04_task-Down_run-01_raw.xdf"
+    "sub-05_ses-04_task-Down_run-01_raw.xdf",
+    "sub-05_ses-01_task-Side_run-01_raw.xdf",
 ])
 SESSIONS_TO_IGNORE_V2: set = set([])
 CUTOFF_DATE = date(2025, 11, 21)
@@ -69,7 +70,14 @@ def load_emg_sessions(
 def extract_epochs(emg_signals: list, partinioner: SignalPartitioner):
     epochs_group = []
     for emg_signal in emg_signals:
-        epochs_group.append(partinioner.partition(emg_signal))
+        temp_epoch = partinioner.partition(emg_signal)
+        epochs_group.append(temp_epoch)
+
+        movement_labels = sorted({
+            desc for desc in emg_signal.annotations.description
+            if str(desc).startswith(str(partinioner.trigger_map.movement_id[-1]))
+        })
+        print(movement_labels)
 
     merged_epochs = mne.concatenate_epochs(epochs_group)
 

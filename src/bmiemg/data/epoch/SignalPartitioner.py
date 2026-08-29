@@ -48,12 +48,13 @@ class SignalPartitioner:
             baseline=(-0.5, 0),
             preload=True,
         )
+        """
         epochs.apply_function(
             lambda x: x + 2000,
             picks="all",
             channel_wise=True,
         )
-        """epochs = split_epochs_into_windows(
+        epochs = split_epochs_into_windows(
             epochs,
             window_s=0.200,
             step_s=0.100,

@@ -4,11 +4,19 @@
 import mne
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 
 from pathlib import Path
 
 from bmiemg.data.convert import session_load, ChannelSplitter
+
+from bmiemg.data.epoch import (
+    SignalPartitioner,
+    V1_TRIGGER_MAP,
+    V2_TRIGGER_MAP,
+)
+
 
 
 
@@ -43,20 +51,34 @@ if __name__ == '__main__':
 
     events, event_id = mne.events_from_annotations(
         emg_signal,
-        event_id='32101',
+        event_id={"32101": 32101},
     )
-
+    """
     epochs = mne.Epochs(
         raw=emg_signal,
         events=events,
         event_id=event_id,
-        tmin=0.0,
-        tmax=2.0,
-        baseline=None,
+        tmin=-0.5,
+        tmax=5.0,
+        baseline=(-0.5, 0),
         preload=True,
         metadata=None,
     )
+    """
 
+    partinioner_v1 = SignalPartitioner(V1_TRIGGER_MAP)
+    #partinioner_v2 = SignalPartitioner(V2_TRIGGER_MAP)
 
-    epochs.plot()
+    epochs = partinioner_v1.partition(emg_signal)
+    epochs = partinioner_v1.group(epochs)
+
+    event_codes = epochs.events[:, 2]
+    id_to_label = {v: k for k, v in epochs.event_id.items()}
+    labels = [id_to_label[code] for code in event_codes]
+    label_counts = pd.Series(labels).value_counts().sort_index()
+    print("\nEpochs per label:")
+    print(label_counts)
+    print("\nTotal epochs:", len(epochs))
+
+    epochs.plot(picks='all')
     plt.show()
