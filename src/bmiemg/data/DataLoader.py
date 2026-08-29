@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -18,6 +17,7 @@ class DataLoader:
     run: str | None = None
     file_type: str = ".xdf"
     modality: str = "emg"
+
 
 """
 def __post_init__(self):

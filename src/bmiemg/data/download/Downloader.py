@@ -10,7 +10,6 @@ from .Request import Request
 from .strategy import DownloadStrategy
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -27,8 +26,7 @@ class Downloader:
         # 1.A Makes sure you can authenticate
         if response.status_code != 207:
             raise AuthenticationError(
-                "The login was not sucessfull: "
-                f"{response.status_code}"
+                "The login was not sucessfull: " f"{response.status_code}"
             )
 
         # 2. Download the data

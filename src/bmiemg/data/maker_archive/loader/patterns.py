@@ -5,10 +5,8 @@ import re
 
 from re import Pattern
 
-
-
 # ================================================================
 # 1. Section: Patterns for Folders
 # ================================================================
-SUBJECT_PATTERN_01: Pattern = re.compile(r"^sub-(\d+)$")        # sub-05
-DATE_PATTERN_01: Pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")   # 2025-04-13
+SUBJECT_PATTERN_01: Pattern = re.compile(r"^sub-(\d+)$")  # sub-05
+DATE_PATTERN_01: Pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")  # 2025-04-13

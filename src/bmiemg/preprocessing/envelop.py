@@ -9,7 +9,6 @@ from functools import partial
 from scipy.ndimage import uniform_filter1d
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -17,7 +16,7 @@ def get_envelop(
     epochs: mne.Epochs | mne.EpochsArray,
     window_s: float = 0.100,
     picks: str | list[str] | None = "all",
-    mode: str = "reflect"
+    mode: str = "reflect",
 ) -> mne.Epochs:
     # 1. Load the data
     env = epochs.copy().load_data()
@@ -25,11 +24,7 @@ def get_envelop(
     window_samples = max(1, int(round(window_s * sfreq)))
 
     # 2. Apply the moving window
-    rms_func = partial(
-        moving_rms,
-        window_samples=window_samples,
-        mode=mode
-    )
+    rms_func = partial(moving_rms, window_samples=window_samples, mode=mode)
     env.apply_function(
         rms_func,
         picks=picks,
@@ -45,7 +40,7 @@ def get_envelop(
 def moving_rms(x: np.ndarray, window_samples: int, mode: str) -> np.ndarray:
     return np.sqrt(
         uniform_filter1d(
-            x ** 2,
+            x**2,
             size=window_samples,
             mode=mode,
         )

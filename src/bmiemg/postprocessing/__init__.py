@@ -1,5 +1,3 @@
-from .importance_pruning import prune_features
+from .importance_pruning import prune_features, prune_channels, prune
 
-__all__ = [
-    "prune_features"
-]
+__all__ = ["prune_features", "prune_channels", "prune"]

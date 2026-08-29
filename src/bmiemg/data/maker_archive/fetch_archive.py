@@ -4,6 +4,7 @@ download_folder(
     local_folder="./sub-P008"
 )
 """
+
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
@@ -32,7 +33,6 @@ NAMESPACES = {
 }
 
 
-
 # ================================================================
 # 1. Section: Main Functions
 # ================================================================
@@ -41,6 +41,7 @@ def dav_url(remote_path: str) -> str:
     if remote_path:
         return f"{DAV_ROOT}/{quote(remote_path)}"
     return DAV_ROOT
+
 
 def propfind(remote_path: str, depth: int = 1):
     url = dav_url(remote_path)
@@ -68,6 +69,7 @@ def propfind(remote_path: str, depth: int = 1):
     r.raise_for_status()
     return r.text
 
+
 def parse_propfind(xml_text: str):
     root = ET.fromstring(xml_text)
     items = []
@@ -83,14 +85,20 @@ def parse_propfind(xml_text: str):
             continue
 
         resourcetype = prop.find("d:resourcetype", NAMESPACES)
-        is_dir = resourcetype is not None and resourcetype.find("d:collection", NAMESPACES) is not None
+        is_dir = (
+            resourcetype is not None
+            and resourcetype.find("d:collection", NAMESPACES) is not None
+        )
 
-        items.append({
-            "href": unquote(str(href.text)),
-            "is_dir": is_dir,
-        })
+        items.append(
+            {
+                "href": unquote(str(href.text)),
+                "is_dir": is_dir,
+            }
+        )
 
     return items
+
 
 def remote_rel_path_from_href(href: str) -> str:
     parsed = urlparse(href)
@@ -98,13 +106,14 @@ def remote_rel_path_from_href(href: str) -> str:
 
     prefix = f"/remote.php/dav/files/{DAV_USER}/"
     if path.startswith(prefix):
-        return path[len(prefix):].strip("/")
+        return path[len(prefix) :].strip("/")
 
     prefix_no_slash = f"/remote.php/dav/files/{DAV_USER}"
     if path == prefix_no_slash:
         return ""
 
     raise ValueError(f"Unexpected href: {href}")
+
 
 def download_file(remote_path: str, local_path: str):
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -118,6 +127,7 @@ def download_file(remote_path: str, local_path: str):
                     f.write(chunk)
 
     print(f"Downloaded file: {remote_path} -> {local_path}")
+
 
 def download_folder(remote_folder: str, local_folder: str):
     os.makedirs(local_folder, exist_ok=True)
@@ -142,9 +152,10 @@ def download_folder(remote_folder: str, local_folder: str):
             local_path = os.path.join(local_folder, filename)
             download_file(rel_path, local_path)
 
-if __name__ == '__main__':
-    #https://make-archives.epfl.ch/apps/files/files/222832?dir=/EPFL%20N-pulse/Quality%20Management%20System/BMI/bids/2025-11-12/sub-05/ses-01
+
+if __name__ == "__main__":
+    # https://make-archives.epfl.ch/apps/files/files/222832?dir=/EPFL%20N-pulse/Quality%20Management%20System/BMI/bids/2025-11-12/sub-05/ses-01
     download_folder(
         remote_folder="EPFL N-pulse/Quality Management System/BMI/bids/2025-11-12/sub-05/ses-01",
-        local_folder=".data/bids/sub-05"
+        local_folder=".data/bids/sub-05",
     )

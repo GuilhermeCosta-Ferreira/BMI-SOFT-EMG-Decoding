@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from .Stream import Stream
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -38,19 +37,17 @@ class SignalStream(Stream):
 
         return unique_types[0]
 
-
-
     def to_raw(self) -> mne.io.RawArray:
         if not self.mono_signal:
             raise ValueError(
                 "To raw only works when the signal is mono (only one modality)"
             )
 
-        data = (self.time_series * 1e-6).T
+        data = (self.time_series / 2 * 1e-6).T # scaler for uv to V
 
         mne_info = mne.create_info(
-            ch_names = list(self.channel_names),
-            sfreq = self.sfreq,
+            ch_names=list(self.channel_names),
+            sfreq=self.sfreq,
             ch_types=self.main_ch_type.lower(),
         )
 

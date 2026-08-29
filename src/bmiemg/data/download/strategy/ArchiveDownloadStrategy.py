@@ -19,14 +19,9 @@ from .archive_utils import (
     parse_propfind,
     remote_relative_path,
     download_file,
-    extract_path_of_interest
+    extract_path_of_interest,
 )
-from .archive_vars import (
-    BODY,
-    HEADER,
-    BASE_URL
-)
-
+from .archive_vars import BODY, HEADER, BASE_URL
 
 
 # ================================================================
@@ -47,10 +42,10 @@ class ArchiveDownloadStrategy(DownloadStrategy):
         self._auth = HTTPBasicAuth(credentials.username, credentials.password)
 
         response = requests.request(
-            method = "PROPFIND",
-            url = self._dav_root,
-            headers = HEADER,
-            data = BODY,
+            method="PROPFIND",
+            url=self._dav_root,
+            headers=HEADER,
+            data=BODY,
             auth=self._auth,
             allow_redirects=False,
         )

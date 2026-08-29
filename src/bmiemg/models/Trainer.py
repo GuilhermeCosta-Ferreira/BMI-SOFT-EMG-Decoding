@@ -13,7 +13,6 @@ from .ModelRegistry import ModelRegistry
 from .Evaluator import Evaluator
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -23,12 +22,12 @@ class Trainer:
     target_builder: TargetBuilder
     evaluator: Evaluator
 
-    def train (
+    def train(
         self,
         epochs: mne.Epochs,
         features: np.ndarray,
         model_name: str,
-        target_name: str
+        target_name: str,
     ) -> TrainingResults:
         y = self.target_builder.build(
             epochs=epochs,
@@ -52,4 +51,6 @@ class Trainer:
             scores=scores,
             mean_score=float(scores.mean()),
             std_score=float(scores.std()),
+            channel_names=[],
+            feature_names=[]
         )

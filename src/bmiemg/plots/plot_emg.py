@@ -8,11 +8,12 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
-def plot_emg(data: np.ndarray, times: np.ndarray, channels_names: np.ndarray) -> tuple[Figure, Axes]:
+def plot_emg(
+    data: np.ndarray, times: np.ndarray, channels_names: np.ndarray
+) -> tuple[Figure, Axes]:
     peak = np.max(np.abs(data))
     offset = 1.2 * peak if peak > 0 else 1.0
 

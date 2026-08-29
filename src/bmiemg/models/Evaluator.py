@@ -11,7 +11,6 @@ from .TrainingConfig import TrainingConfig
 from .ClassifierEstimator import ClassifierEstimator
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -20,10 +19,7 @@ class Evaluator:
     config: TrainingConfig
 
     def cross_validate(
-        self,
-        estimator: ClassifierEstimator,
-        x: np.ndarray,
-        y: np.ndarray
+        self, estimator: ClassifierEstimator, x: np.ndarray, y: np.ndarray
     ) -> np.ndarray:
         cv = StratifiedKFold(
             n_splits=self.config.n_splits,

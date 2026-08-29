@@ -8,7 +8,6 @@ from pathlib import Path
 from datetime import date
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -17,7 +16,7 @@ def save_epochs(
     dataset_dir: Path,
     dataset_name: str,
     overwrite: bool = True,
-    with_time: bool = True
+    with_time: bool = True,
 ) -> Path:
     # 1. Define the paths
     dataset_dir.mkdir(parents=True, exist_ok=True)

@@ -9,7 +9,6 @@ from .model_factories import ModelFactory
 from .ClassifierEstimator import ClassifierEstimator
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

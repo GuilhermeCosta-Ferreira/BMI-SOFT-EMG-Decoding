@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from .TargetBuilder import TargetBuilder
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

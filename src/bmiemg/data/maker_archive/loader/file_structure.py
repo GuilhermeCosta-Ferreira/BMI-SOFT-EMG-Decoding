@@ -9,13 +9,14 @@ from mne_bids import BIDSPath
 from .patterns import SUBJECT_PATTERN_01, DATE_PATTERN_01
 
 
-
 # ================================================================
 # 1. Section: Checker Functions
 # ================================================================
 def is_dataset_bids(data_dir: Path) -> bool:
     # A. Checks if the dataset is not empty
-    subfolders = [p for p in data_dir.iterdir() if p.is_dir() and not p.name.startswith(".")]
+    subfolders = [
+        p for p in data_dir.iterdir() if p.is_dir() and not p.name.startswith(".")
+    ]
     if len(subfolders) == 0:
         raise FileNotFoundError(f"There was no foulders inside {data_dir}")
 
@@ -27,8 +28,7 @@ def is_dataset_bids(data_dir: Path) -> bool:
     # 2. Applies the condition check accordingly
     if subject_finds and date_finds:
         raise NameError(
-            "Found both instances of subject folders and date folders"
-            f"at {endings}"
+            "Found both instances of subject folders and date folders" f"at {endings}"
         )
     elif not subject_finds and not date_finds:
         raise NameError(
@@ -41,28 +41,28 @@ def is_dataset_bids(data_dir: Path) -> bool:
         return False
 
 
-
 # ================================================================
 # 0. Section: Extractors
 # ================================================================
-def extract_perfect_bids(data_dir: Path, modality: str, file_type: str) -> list[BIDSPath]:
+def extract_perfect_bids(
+    data_dir: Path, modality: str, file_type: str
+) -> list[BIDSPath]:
     return mne_bids.find_matching_paths(
-            data_dir,
-            datatypes=modality,
-            extensions=file_type
+        data_dir, datatypes=modality, extensions=file_type
     )
 
+
 def extract_date_bids(data_dir: Path, modality: str, file_type: str) -> list[BIDSPath]:
-    subfolders = [p.name for p in data_dir.iterdir() if p.is_dir() and not p.name.startswith(".")]
+    subfolders = [
+        p.name for p in data_dir.iterdir() if p.is_dir() and not p.name.startswith(".")
+    ]
     all_bids_path_list = []
 
     for folder in subfolders:
         root = data_dir / folder
 
         bids_paths = mne_bids.find_matching_paths(
-            root,
-            datatypes=modality,
-            extensions=file_type
+            root, datatypes=modality, extensions=file_type
         )
         all_bids_path_list.extend(bids_paths)
 

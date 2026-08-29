@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from .Stream import Stream
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -21,9 +20,13 @@ class MarkerStream(Stream):
     def to_annotation(self) -> mne.Annotations:
         onsets = self.time_stamps - self.signal_start_time
         descriptions = [
-                str(marker[0]) if isinstance(marker, (list, tuple, np.ndarray)) else str(marker)
-                for marker in self.time_series
-            ]
+            (
+                str(marker[0])
+                if isinstance(marker, (list, tuple, np.ndarray))
+                else str(marker)
+            )
+            for marker in self.time_series
+        ]
         extras = [
             {
                 "xdf_timestamp": float(timestamp),
@@ -38,8 +41,8 @@ class MarkerStream(Stream):
         durations[-1] = 0.0
 
         return mne.Annotations(
-            onset = onsets,
-            duration = np.zeros(len(onsets), dtype=float),
-            description = descriptions,
-            extras = extras
+            onset=onsets,
+            duration=np.zeros(len(onsets), dtype=float),
+            description=descriptions,
+            extras=extras,
         )
