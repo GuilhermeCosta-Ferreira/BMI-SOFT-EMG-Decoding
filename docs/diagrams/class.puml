@@ -53,7 +53,7 @@ package "Download" {
 
 
     package "Service Layer" #E8F5E9 {
-        class Registry <<planned>> {
+        class Registry <<partial>> {
             + register(source: str, strategy: DownloadStrategy): None
             + get(source: str): DownloadStrategy
         }
