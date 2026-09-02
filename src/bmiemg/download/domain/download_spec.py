@@ -1,6 +1,7 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+from typing import ClassVar
 from dataclasses import dataclass
 
 
@@ -10,5 +11,5 @@ from dataclasses import dataclass
 # ================================================================
 @dataclass
 class DownloadSpec:
-    source: str
+    source: ClassVar[str]
     dest: str

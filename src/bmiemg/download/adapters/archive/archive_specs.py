@@ -1,6 +1,7 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+from typing import ClassVar
 from urllib.parse import quote
 from dataclasses import dataclass, field
 
@@ -12,6 +13,8 @@ from ...domain import DownloadSpec
 # ================================================================
 @dataclass
 class ArchiveSpecs(DownloadSpec):
+    source: ClassVar[str] = "archive"
+
     url: str
     username: str
     password: str
