@@ -49,17 +49,17 @@ package "Download" {
             + fetch(spec: DownloadSpec): None
         }
         DownloadStrategy ..> DownloadSpec
-    }
 
 
-    package "Service Layer" #E8F5E9 {
-        class Registry <<partial>> {
+        class Registry <<implemented>> {
             + register(source: str, strategy: DownloadStrategy): None
             + get(source: str): DownloadStrategy
         }
         Registry ..> DownloadStrategy
+    }
 
 
+    package "Service Layer" #E8F5E9 {
         class Downloader <<partial>> {
             - registry: Registry
 
