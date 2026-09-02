@@ -71,15 +71,25 @@ package "Download" {
 
     package "Adapter Layer" #E3F2FD {
         class ArchiveStrategy <<partial>> {
-
+            - _auth: HTTPBasicAuth
         }
         ArchiveStrategy ..|> DownloadStrategy
 
 
-        class ArchiveSpecs <<implemented>> {
+        class ArchiveSpecs <<partial>> {
+            + url: str
             + username: str
             + password: str
-            + key: str
+            + dav_user: str
+            + filename: str | None
+            + extra: dict
+
+            - _dav_root: str
+            - _dav_url: str
+            - _base_url: str
+            - _header: dict
+            - _body: str
+            - _namespaces: dict
         }
         ArchiveSpecs --|> DownloadSpec
     }
