@@ -60,8 +60,8 @@ package "Download" {
 
 
     package "Service Layer" #E8F5E9 {
-        class Downloader <<partial>> {
-            - registry: Registry
+        class Downloader <<implemented>> {
+            - _registry: Registry
 
             + run(spec: DownloadSpec): None
         }
