@@ -70,13 +70,13 @@ package "Download" {
     }
 
     package "Adapter Layer" #E3F2FD {
-        class ArchiveStrategy <<partial>> {
+        class ArchiveStrategy <<implemented>> {
             - _auth: HTTPBasicAuth
         }
         ArchiveStrategy ..|> DownloadStrategy
 
 
-        class ArchiveSpecs <<partial>> {
+        class ArchiveSpecs <<implemented>> {
             + url: str
             + username: str
             + password: str
