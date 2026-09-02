@@ -13,4 +13,4 @@ lint:
 	poetry run pylint --disable=C src/
 
 
-dev: diagram license format lint
+dev: diagram format lint
