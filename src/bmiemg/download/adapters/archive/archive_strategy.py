@@ -19,8 +19,8 @@ from ...domain import DownloadStrategy, Registry
 # ================================================================
 # 1. Section: Functions
 # ================================================================
-@dataclass
 @Registry.register("archive")
+@dataclass
 class ArchiveStrategy(DownloadStrategy):
     def validate(self, spec: ArchiveSpecs) -> None:
         self._auth = HTTPBasicAuth(spec.username, spec.password)
