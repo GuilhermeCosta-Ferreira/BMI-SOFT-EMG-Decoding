@@ -1,5 +1,5 @@
 @startuml
-left to right direction
+top to bottom direction
 skinparam linetype ortho
 skinparam class {
     BackgroundColor<<implemented>> #D5F5D5
@@ -32,24 +32,59 @@ endlegend
 !$SHOW_DEPENDENCIES = 0
 
 
+
 '=============================================================================='
-'Service Layer'
+'Downloader Package'
 '=============================================================================='
-package "Service Layer" #E8F5E9 {
+package "Download" {
+    package "Model Domain Layer" #FFF8E1 {
+        abstract class DownloadSpec <<planned>> {
+            + source: str
+            + dest: Path
+        }
+
+
+        interface DownloadStrategy <<partial>> {
+            + validate(spec: DownloadSpec): None
+            + fetch(spec: DownloadSpec): None
+        }
+        DownloadStrategy ..> DownloadSpec
+    }
+
+
+    package "Service Layer" #E8F5E9 {
+        class Registry <<planned>> {
+            + register(source: str, strategy: DownloadStrategy): None
+            + get(source: str): DownloadStrategy
+        }
+        Registry ..> DownloadStrategy
+
+
+        class Downloader <<partial>> {
+            - registry: Registry
+
+            + run(spec: DownloadSpec): None
+        }
+        Downloader --> Registry
+        Downloader ..> DownloadSpec
+    }
+
+    package "Adapter Layer" #E3F2FD {
+        class ArchiveStrategy <<planned>> {
+
+        }
+        ArchiveStrategy ..|> DownloadStrategy
+
+
+        class ArhciveSpecs <<planned>> {
+            + username: str
+            + password: str
+            + key: str
+        }
+        ArhciveSpecs --|> DownloadSpec
+    }
+
 }
 
-
-'=============================================================================='
-'Model Domain'
-'=============================================================================='
-package "Model Domain Layer" #FFF8E1 {
-}
-
-
-'=============================================================================='
-'Adapter Layer'
-'=============================================================================='
-package "Adapter Layer" #E3F2FD {
-}
 
 @enduml
