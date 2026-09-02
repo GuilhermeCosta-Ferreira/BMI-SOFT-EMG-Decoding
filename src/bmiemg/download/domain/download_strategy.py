@@ -2,7 +2,7 @@
 # 0. Section: IMPORTS
 # ================================================================
 from dataclasses import dataclass
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from .download_spec import DownloadSpec
 
@@ -12,9 +12,11 @@ from .download_spec import DownloadSpec
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class DownloadStrategy (ABC):
-    def validate(self, spec: DownloadSpec) -> None:
+class DownloadStrategy[SpecT: DownloadSpec](ABC):
+    @abstractmethod
+    def validate(self, spec: SpecT) -> None:
         raise NotImplementedError
 
-    def fetch(self, spec: DownloadSpec) -> None:
+    @abstractmethod
+    def fetch(self, spec: SpecT) -> None:
         raise NotImplementedError
