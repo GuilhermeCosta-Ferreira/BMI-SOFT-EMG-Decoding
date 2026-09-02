@@ -70,18 +70,18 @@ package "Download" {
     }
 
     package "Adapter Layer" #E3F2FD {
-        class ArchiveStrategy <<planned>> {
+        class ArchiveStrategy <<partial>> {
 
         }
         ArchiveStrategy ..|> DownloadStrategy
 
 
-        class ArhciveSpecs <<planned>> {
+        class ArchiveSpecs <<implemented>> {
             + username: str
             + password: str
             + key: str
         }
-        ArhciveSpecs --|> DownloadSpec
+        ArchiveSpecs --|> DownloadSpec
     }
 
 }
