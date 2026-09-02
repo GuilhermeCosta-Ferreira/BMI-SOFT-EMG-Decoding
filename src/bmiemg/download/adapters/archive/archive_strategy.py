@@ -11,8 +11,8 @@ import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 from urllib.parse import unquote, urlparse
 
-from ...domain import DownloadStrategy, Registry
 from .archive_specs import ArchiveSpecs
+from ...domain import DownloadStrategy, Registry
 
 
 
