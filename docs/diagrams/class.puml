@@ -38,13 +38,13 @@ endlegend
 '=============================================================================='
 package "Download" {
     package "Model Domain Layer" #FFF8E1 {
-        abstract class DownloadSpec <<planned>> {
+        abstract class DownloadSpec <<implemented>> {
             + source: str
             + dest: Path
         }
 
 
-        interface DownloadStrategy <<partial>> {
+        interface DownloadStrategy <<implemented>> {
             + validate(spec: DownloadSpec): None
             + fetch(spec: DownloadSpec): None
         }
