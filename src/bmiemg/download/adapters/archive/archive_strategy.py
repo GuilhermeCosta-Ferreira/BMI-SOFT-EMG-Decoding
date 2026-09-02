@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
 from urllib.parse import unquote, urlparse
 
-from ...domain import DownloadStrategy
+from ...domain import DownloadStrategy, Registry
 from .archive_specs import ArchiveSpecs
 
 
@@ -20,6 +20,7 @@ from .archive_specs import ArchiveSpecs
 # 1. Section: Functions
 # ================================================================
 @dataclass
+@Registry.register("archive")
 class ArchiveStrategy(DownloadStrategy):
     def validate(self, spec: ArchiveSpecs) -> None:
         self._auth = HTTPBasicAuth(spec.username, spec.password)
