@@ -10,6 +10,6 @@ This repository is responsible for the handling of the EMG decoding pipeline: fr
 ## Handling the Data
 Because we have an in-house data acquisition pipeline we need a pipeline for Downloading and Loading the data. The downloading the data is currently being implemented and should follow the following architecture:
 
-![image](images/downloader_uml_v1.png)
+![image](images/class.png)
 
 The loading the follows a `mne` based approach with simple inheritance from a Loader class
