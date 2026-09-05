@@ -30,5 +30,5 @@ if __name__ == '__main__':
         }
     )
 
-    downlaoder = Downloader()
-    downlaoder.run(specs)
+    downloader = Downloader()
+    downloader.run(specs)
