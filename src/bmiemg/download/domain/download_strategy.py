@@ -3,27 +3,20 @@
 # ================================================================
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from pathlib import Path
 
-from typing_extensions import Any
+from .download_spec import DownloadSpec
 
-from ..Credentials import Credentials
-from ..Request import Request
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class DownloadStrategy(ABC):
+class DownloadStrategy[SpecT: DownloadSpec](ABC):
     @abstractmethod
-    def authenticate(self, credentials: Credentials) -> Any:
-        pass
+    def validate(self, spec: SpecT) -> None:
+        raise NotImplementedError
 
     @abstractmethod
-    def download(self, request: Request) -> Path:
-        pass
-
-    @abstractmethod
-    def cleanup(self) -> None:
-        pass
+    def fetch(self, spec: SpecT) -> None:
+        raise NotImplementedError

@@ -1,0 +1,100 @@
+@startuml
+top to bottom direction
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor<<implemented>> #D5F5D5
+    BorderColor<<implemented>> #2E7D32
+    FontColor<<implemented>> #1B5E20
+
+    BackgroundColor<<partial>> #FFF3CD
+    BorderColor<<partial>> #B8860B
+    FontColor<<partial>> #7A5600
+
+    BackgroundColor<<planned>> #F8D7DA
+    BorderColor<<planned>> #B02A37
+    FontColor<<planned>> #842029
+
+    BackgroundColor<<external>> #E3F2FD
+    BorderColor<<external>> #1565C0
+    FontColor<<external>> #0D47A1
+}
+
+legend right
+|= Colour |
+|<#D5F5D5> Implemented |
+|<#FFF3CD> Partially implemented |
+|<#F8D7DA> Planned / not implemented |
+|<#E3F2FD> External dependency |
+endlegend
+
+' 0 = hide dependency lines
+' 1 = show dependency lines
+!$SHOW_DEPENDENCIES = 0
+
+
+
+'=============================================================================='
+'Downloader Package'
+'=============================================================================='
+package "Download" {
+    package "Model Domain Layer" #FFF8E1 {
+        abstract class DownloadSpec <<implemented>> {
+            + source: str
+            + dest: Path
+        }
+
+
+        interface DownloadStrategy <<implemented>> {
+            + validate(spec: DownloadSpec): None
+            + fetch(spec: DownloadSpec): None
+        }
+        DownloadStrategy ..> DownloadSpec
+
+
+        class Registry <<implemented>> {
+            + register(source: str, strategy: DownloadStrategy): None
+            + get(source: str): DownloadStrategy
+        }
+        Registry ..> DownloadStrategy
+    }
+
+
+    package "Service Layer" #E8F5E9 {
+        class Downloader <<implemented>> {
+            - _registry: Registry
+
+            + run(spec: DownloadSpec): None
+        }
+        Downloader --> Registry
+        Downloader ..> DownloadSpec
+    }
+
+    package "Adapter Layer" #E3F2FD {
+        class ArchiveStrategy <<implemented>> {
+            - _auth: HTTPBasicAuth
+        }
+        ArchiveStrategy ..|> DownloadStrategy
+
+
+        class ArchiveSpecs <<implemented>> {
+            + url: str
+            + username: str
+            + password: str
+            + dav_user: str
+            + filename: str | None
+            + extra: dict
+
+            - _dav_root: str
+            - _dav_url: str
+            - _base_url: str
+            - _header: dict
+            - _body: str
+            - _namespaces: dict
+        }
+        ArchiveSpecs --|> DownloadSpec
+    }
+
+}
+
+
+@enduml

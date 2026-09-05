@@ -227,3 +227,4 @@ libML/__pycache__/*
 .venv
 .env
 *.bkp
+docs/diagrams/*.png

@@ -1,0 +1,33 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    FontColor #111111
+}
+skinparam note {
+    BackgroundColor #FFF8DC
+    BorderColor #999999
+}
+
+legend right
+|= Colour |= Meaning |
+|<#D6EAF8> | User command / function call |
+|<#FADBD8> | User manual edit or file placement |
+|<#D5F5E3> | System action |
+|<#F5B7B1> | Error / failed validation |
+|<#FFF8DC> | Artefact note |
+endlegend
+
+|#E8F1FF|User|
+start
+:Build a DownloadSpecs object; <<#FADBD8>>
+:Run downloder run(); <<#D6EAF8>>
+
+|#EAF7EA|System|
+:Validate download specs; <<#D5F5E3>>
+:Authenticates the server; <<#D5F5E3>>
+:Downloads the data; <<#D5F5E3>>
+
+end
+@enduml

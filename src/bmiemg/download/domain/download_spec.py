@@ -1,16 +1,15 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from dataclasses import dataclass, field
-from pathlib import Path
+from typing import ClassVar
+from dataclasses import dataclass
+
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class Request:
-    url: str
-    filename: str | None
-    out_path: Path
-    extra: dict = field(default_factory=dict)
+class DownloadSpec:
+    source: ClassVar[str]
+    dest: str
