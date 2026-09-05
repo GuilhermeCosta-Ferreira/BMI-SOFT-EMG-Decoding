@@ -43,7 +43,8 @@ class ArchiveSpecs(DownloadSpec):
         remote_path = self.url.strip("/")
         if remote_path:
             self._dav_url = f"{self._dav_root}/{quote(remote_path)}"
-        self._dav_url = self._dav_root
+        else:
+            self._dav_url = self._dav_root
 
     def _header(self, depth: int | str = 1) -> dict:
         return {
