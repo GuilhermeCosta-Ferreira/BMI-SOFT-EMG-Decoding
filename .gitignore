@@ -228,3 +228,4 @@ libML/__pycache__/*
 .env
 *.bkp
 docs/diagrams/*.png
+.claude/
