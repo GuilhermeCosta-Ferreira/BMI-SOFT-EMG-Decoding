@@ -97,4 +97,24 @@ package "Download" {
 }
 
 
+'=============================================================================='
+'Loader Package'
+'=============================================================================='
+package "Loader" {
+    package "Service Layer" #E8F5E9 {
+
+    }
+
+
+    package "Model Domain Layer" #FFF8E1 {
+
+    }
+
+
+    package "Adapter Layer" #E3F2FD {
+
+    }
+}
+
+
 @enduml
