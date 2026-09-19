@@ -20,6 +20,9 @@ legend right
 endlegend
 
 |#E8F1FF|User|
+|#EAF7EA|System|
+
+|#E8F1FF|User|
 start
 :Build a DownloadSpecs object; <<#FADBD8>>
 :Run downloder run(); <<#D6EAF8>>
@@ -28,6 +31,23 @@ start
 :Validate download specs; <<#D5F5E3>>
 :Authenticates the server; <<#D5F5E3>>
 :Downloads the data; <<#D5F5E3>>
+
+|#E8F1FF|User|
+if (Dataset source is "archive-raw"?) then (no)
+
+else (yes)
+    :Build a data config; <<#FADBD8>>
+    :Run dataset make(); <<#D6EAF8>>
+
+    |#EAF7EA|System|
+    :Creates da dataset file; <<#D5F5E3>>
+
+    |#E8F1FF|User|
+    :Uploads the dataset to Make Archive; <<#FADBD8>>
+endif
+
+:Load a dataset; <<#D6EAF8>>
+
 
 end
 @enduml
