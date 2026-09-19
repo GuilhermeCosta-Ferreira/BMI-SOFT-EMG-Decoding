@@ -19,7 +19,7 @@ from ...domain import DownloadStrategy, Registry
 # ================================================================
 # 1. Section: Functions
 # ================================================================
-@Registry.register("archive")
+@Registry.register("archive-raw")
 @dataclass
 class ArchiveStrategy(DownloadStrategy):
     def validate(self, spec: ArchiveSpecs) -> None:
