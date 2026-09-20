@@ -98,23 +98,82 @@ package "Download" {
 
 
 '=============================================================================='
-'Loader Package'
+'Dataset Pruner Package'
 '=============================================================================='
-package "Loader" {
+package "Dataset Pruner" {
     package "Service Layer" #E8F5E9 {
+        class DatasetPruner <<planned>> {
+            + dataset_source_name: str
+            + protocol_name: str
 
+            - _source: Source
+
+            + init(): None
+            + run(): None
+            + add_step(list[PruneStep]): None
+        }
     }
 
 
     package "Model Domain Layer" #FFF8E1 {
+        abstract class DataActor <<planned>> {
+            + name: ClassVar[str]
 
+            + def copy_with(): DataActor
+        }
+
+
+        abstract class PruneSpecs <<planned>> {
+            name: ClassVar[str]
+
+        }
+
+
+        interface PruneStep <<planned>> {
+            + name: ClassVar[str]
+            + config: PruneSpecs
+
+            + def apply(actors: list[DataActor]): list[DataActor]
+        }
+        PruneStep ..> DataActor
+        PruneStep o-- PruneSpecs
+        DatasetPruner --> PruneStep
+
+
+        interface Protocols <<planned>> {
+            + name: ClassVar[str]
+
+            + def apply(actors: list[DataActor], steps: list[PruneStep]): list[DataActor]
+        }
+        Protocols ..> DataActor
+        Protocols ..> PruneStep
+
+
+        class XDFData <<planned>> {
+            + metadata: dict
+        }
+        DataActor <|-- XDFData
+
+
+        class PruneBadData <<planned>> {
+
+        }
+        PruneStep <|.. PruneBadData
     }
 
 
     package "Adapter Layer" #E3F2FD {
+        class Source <<planned>> {
+            + data_dir: Path
+            + dataset_dir: Path
 
+            + def final_data_dir(dataset_name: str): Path
+            + def raw_data_dir(dataset_name: str): Path
+        }
+        Source <-- DatasetPruner
     }
 }
+
 
 
 @enduml
