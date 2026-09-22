@@ -63,7 +63,7 @@ class EPN612Strategy(DownloadStrategy[EPN612Specs]):
             # The .part file remains available for diagnosis after a failure.
             partial_path.replace(archive_path)
 
-        print(f"Extracting {spec.filename} . This can take several minutes...")
+        print(f"Extracting {spec.filename} ...")
         extraction_path = destination / archive_path.stem
         _extract_zip_safely(archive_path, extraction_path)
         print(f"Done.")
@@ -164,10 +164,11 @@ def _extract_zip_safely(archive_path: Path, destination: Path) -> None:
     extraction_root = destination.resolve()
 
     with zipfile.ZipFile(archive_path) as archive:
-        # Commented for performance purpose: probably redundant integrity test, and doubles unzipping time.
-        #corrupt_member = archive.testzip() # check CRC checksum (zip)
-        #if corrupt_member is not None:
-        #    raise ValueError(f"Corrupted ZIP member: {corrupt_member}")
+        # testzip() could be removed for performance purpose: 
+        # probably redundant integrity test, and doubles unzipping time (but negligeable compared to download time).
+        corrupt_member = archive.testzip() # check CRC checksum (zip)
+        if corrupt_member is not None:
+            raise ValueError(f"Corrupted ZIP member: {corrupt_member}")
 
         for member in archive.infolist():
             member_path = (extraction_root / member.filename).resolve()
