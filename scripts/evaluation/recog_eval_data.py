@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from bmiemg.data.convert import session_load
-from bmiemg.data.epoch import V2_TRIGGER_MAP
+from bmiemg.data.epoch import TriggerMap, V1_TRIGGER_MAP, V2_TRIGGER_MAP
 
 
 CHANNELS = ("AUX7", "AUX12", "AUX8", "AUX11", "AUX10")
@@ -34,22 +34,36 @@ class BatchInfo:
 # ================================================================
 # 1. Map an XDF movement code to its gesture label
 # ================================================================
-# Search the existing trigger map for the code.
-# Raise an error if the code has no gesture label.
-def movement_label(code: int) -> str:
-    for label, codes in V2_TRIGGER_MAP.target_code.items():
+def phase_digit(trigger_map: TriggerMap, name: str) -> str:
+    return next(str(k) for k, v in trigger_map.phase_code.code_dict.items() if v == name)
+def detect_trigger_map(marker_stream) -> TriggerMap:
+    markers = [str(value[0]).strip() for value in marker_stream.time_series]
+    leading = {m[0] for m in markers if len(m) == 5 and m.isdigit()}
+    # V1 uses phases 1-5 and V2 uses 1,3,5,7,9, so the leading digits identify the map
+    for trigger_map in (V2_TRIGGER_MAP, V1_TRIGGER_MAP):
+        if leading <= {str(code) for code in trigger_map.phase_code.code_dict}:
+            return trigger_map
+    raise ValueError(f"Marker phases {sorted(leading)} match neither V1 nor V2")
+
+# Search the existing trigger map for the code and raise an error if the code has no gesture label.
+def movement_label(code: int, trigger_map: TriggerMap) -> str:
+    for label, codes in trigger_map.target_code.items():
         if code in codes:
             return label
-    raise ValueError(f"Movement code {code} is not mapped by V2_TRIGGER_MAP")
+    raise ValueError(f"Movement code {code} is not mapped by this trigger map")
 
 
 # ================================================================
 # 2. Rebuild trials from preparation, movement, and return markers
 # ================================================================
 # Read the XDF marker stream in chronological order.
-# Match markers 3, 5, and 7 for each movement.
+# Match markers prep(3), move(5) and return(7) for each movement.
 # Store the gesture and its preparation and movement times.
-def extract_trials(marker_stream) -> list[Trial]:
+def extract_trials(marker_stream, trigger_map: TriggerMap) -> list[Trial]:
+    prep_digit = phase_digit(trigger_map, "prep")
+    move_digit = phase_digit(trigger_map, "move")
+    return_digit = phase_digit(trigger_map, "return")
+
     trials = []
     prepared = None
     moving = None
@@ -60,18 +74,18 @@ def extract_trials(marker_stream) -> list[Trial]:
             continue
         phase, identity = marker[0], marker[1:]
 
-        if phase == "3" and moving is None:
+        if phase == prep_digit and moving is None:
             prepared = (float(timestamp), identity)
-        elif phase == "5" and prepared is not None and prepared[1] == identity and moving is None:
+        elif phase == move_digit and prepared is not None and prepared[1] == identity and moving is None:
             moving = (float(timestamp), prepared[0], identity)
             prepared = None
-        elif phase == "7" and moving is not None:
+        elif phase == return_digit and moving is not None:
             start, prep_start, current_identity = moving
             if identity != current_identity:
                 raise ValueError(f"Return marker {marker} does not match movement")
             code = int(identity[-2:])
             trials.append(
-                Trial(len(trials) + 1, code, movement_label(code), prep_start,
+                Trial(len(trials) + 1, code, movement_label(code, trigger_map), prep_start,
                       start, float(timestamp))
             )
             moving = None
@@ -107,10 +121,11 @@ def split_trials(trials: list[Trial], train_per_code: int) -> tuple[set[int], se
 # ================================================================
 # 4. Find each trial's end and the following rest period
 # ================================================================
-# Find marker 9 after each movement's return marker.
-# Label rest from marker 9 until the next preparation marker.
+# Find marker ITI after each movement's return marker.
+# Label rest from marker ITI until the next preparation marker.
 # Leave the final rest period unlabeled because its end is unknown.
-def trial_bounds(marker_stream, trials: list[Trial]) -> dict:
+def trial_bounds(marker_stream, trials: list[Trial], trigger_map: TriggerMap) -> dict:
+    iti_digit = phase_digit(trigger_map, "iti")
     events = [
         (float(time), str(value[0]).strip())
         for time, value in zip(marker_stream.time_stamps, marker_stream.time_series)
@@ -125,7 +140,7 @@ def trial_bounds(marker_stream, trials: list[Trial]) -> dict:
                 if time > trial.end
                 and (next_prep is None or time < next_prep)
                 and len(marker) == 5
-                and marker[0] == "9"
+                and marker[0] == iti_digit
                 and marker.isdigit()
                 and int(marker[-2:]) == trial.code
             ),
@@ -146,8 +161,9 @@ def trial_bounds(marker_stream, trials: list[Trial]) -> dict:
 # Return EMG, timestamps, sampling rate, trials, and bounds.
 def load_recording(path: Path):
     session = session_load(path)
-    trials = extract_trials(session.marker_stream)
-    bounds = trial_bounds(session.marker_stream, trials)
+    trigger_map = detect_trigger_map(session.marker_stream)
+    trials = extract_trials(session.marker_stream, trigger_map)
+    bounds = trial_bounds(session.marker_stream, trials, trigger_map)
     stream = session.signal_stream
     names = list(stream.channel_names)
     missing = set(CHANNELS) - set(names)
