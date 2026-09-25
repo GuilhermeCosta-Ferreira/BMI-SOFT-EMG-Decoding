@@ -102,11 +102,13 @@ package "Download" {
 '=============================================================================='
 package "Dataset Pruner" {
     package "Service Layer" #E8F5E9 {
-        class DatasetPruner <<planned>> {
+        class DatasetPruner <<partial>> {
             + dataset_source_name: str
             + protocol_name: str
+            + is_raw_data: bool
 
             - _source: Source
+            - _loader: Loader
 
             + init(): None
             + run(): None
@@ -116,20 +118,20 @@ package "Dataset Pruner" {
 
 
     package "Model Domain Layer" #FFF8E1 {
-        abstract class DataActor <<planned>> {
+        abstract class DataActor <<implemented>> {
             + name: ClassVar[str]
 
             + def copy_with(): DataActor
         }
 
 
-        abstract class PruneSpecs <<planned>> {
+        abstract class PruneSpecs <<implemented>> {
             name: ClassVar[str]
 
         }
 
 
-        interface PruneStep <<planned>> {
+        interface PruneStep <<implemented>> {
             + name: ClassVar[str]
             + config: PruneSpecs
 
@@ -140,13 +142,20 @@ package "Dataset Pruner" {
         DatasetPruner --> PruneStep
 
 
-        interface Protocols <<planned>> {
+        interface Protocol <<implemented>> {
             + name: ClassVar[str]
 
             + def apply(actors: list[DataActor], steps: list[PruneStep]): list[DataActor]
         }
-        Protocols ..> DataActor
-        Protocols ..> PruneStep
+        Protocol ..> DataActor
+        Protocol ..> PruneStep
+
+
+        class ProtocolRegistry <<implemented>> {
+            + register(name: str, protocol: Protocol): None
+            + get(name: str): Protocol
+        }
+        ProtocolRegistry ..> Protocol
 
 
         class XDFData <<planned>> {
@@ -163,14 +172,28 @@ package "Dataset Pruner" {
 
 
     package "Adapter Layer" #E3F2FD {
-        class Source <<planned>> {
+        class Source <<implemented>> {
             + data_dir: Path
             + dataset_dir: Path
 
             + def final_data_dir(dataset_name: str): Path
-            + def raw_data_dir(dataset_name: str): Path
+            + def out_dir(dataset_name: str): Path
         }
         Source <-- DatasetPruner
+
+
+        interface Loader <<planned>> {
+            + source: Source
+
+            + load(): list[DataActor]
+        }
+        Loader ..> DataActor
+
+
+        interface ArchiveRawLoader <<planned>> {
+
+        }
+        Loader <|-- ArchiveRawLoader
     }
 }
 
