@@ -9,7 +9,7 @@ from pathlib import PurePosixPath
 from dataclasses import dataclass
 import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlparse, quote
 
 from .archive_specs import ArchiveSpecs
 from ...domain import DownloadStrategy, Registry
@@ -69,7 +69,13 @@ class ArchiveStrategy(DownloadStrategy):
             else:
                 remote_folder = _extract_path_of_interest(rel_path, spec._dav_url)
                 local_path = os.path.join(spec.dest, remote_folder)
-                _download_file(self._auth, spec, local_path)
+
+                # Skip files that were already downloaded in a previous run
+                if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+                    continue
+
+                remote_url = f"{spec._base_url}{quote(item['href'])}"
+                _download_file(self._auth, remote_url, local_path)
 
 
 # ──────────────────────────────────────────────────────
@@ -156,10 +162,10 @@ def _extract_path_of_interest(rel_path: str, server_path: str) -> str:
     )
 
 def _download_file(
-    auth: HTTPBasicAuth, spec: ArchiveSpecs, local_path: str) -> None:
+    auth: HTTPBasicAuth, remote_url: str, local_path: str) -> None:
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
-    with requests.get(spec._dav_url, auth=auth, stream=True) as r:
+    with requests.get(remote_url, auth=auth, stream=True, timeout=(10, 60)) as r:
         r.raise_for_status()
         with open(local_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024 * 1024):
