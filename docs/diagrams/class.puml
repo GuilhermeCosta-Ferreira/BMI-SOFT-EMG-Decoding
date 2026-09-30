@@ -180,19 +180,34 @@ package "Dataset Pruner" {
         Source <-- DatasetPruner
 
 
-        interface Loader <<planned>> {
+        class Loader <<implemented>> {
             + source: Source
 
-            + load(): list[DataActor]
+            + load(source_names: list[str]): list[DataActor]
         }
         Loader ..> DataActor
         DatasetPruner --> Loader
 
 
-        interface ArchiveRawLoader <<planned>> {
+        abstract class FileLoader <<planned>> {
+            + def load_file(path: Path): list[DataActor]
+        }
+        FileLoader ..> DataActor
+
+
+        class FileLoaderRegistry <<planned>> {
+            + register(suffix: str): Callable
+            + get(suffix: str): FileLoader
+            + known_suffixes(): set[str]
+        }
+        FileLoaderRegistry ..> FileLoader
+        Loader --> FileLoaderRegistry
+
+
+        class XdfLoader <<planned>> {
 
         }
-        Loader <|-- ArchiveRawLoader
+        FileLoader <|.. XdfLoader
     }
 }
 
