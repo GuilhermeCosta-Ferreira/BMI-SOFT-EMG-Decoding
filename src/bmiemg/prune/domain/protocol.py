@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 from dataclasses import dataclass
 
-from .data_actor import DataActor
+from .actors import DataActor
 from .prune_step import PruneStep
 
 

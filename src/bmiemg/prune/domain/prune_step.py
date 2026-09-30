@@ -6,7 +6,7 @@ from typing import ClassVar
 from dataclasses import dataclass
 
 from .prune_specs import PruneSpecs
-from .data_actor import DataActor
+from .actors import DataActor
 
 
 
