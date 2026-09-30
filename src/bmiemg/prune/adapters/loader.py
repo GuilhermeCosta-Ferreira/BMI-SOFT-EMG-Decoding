@@ -42,16 +42,6 @@ class Loader:
                 for file in files:
                     actors.append(loader.load_file(file))
 
-        return list(actors)
-
-
-
-# ──────────────────────────────────────────────────────
-# 1.1 Subsection: Helper Functions
-# ──────────────────────────────────────────────────────
-def _print_readable_summary(source_str: str, files_present: list[Path]) -> None:
-    known = FileLoaderRegistry.known_suffixes()
-    types = {p.suffix.lower() for p in files_present}
         return actors
 
 
