@@ -156,8 +156,11 @@ package "Dataset Pruner" {
         ProtocolRegistry ..> Protocol
 
 
-        class XDFData <<planned>> {
-            + metadata: dict
+        class XdfData <<implemented>> {
+            + streams: list[dict]
+            + file_header: dict
+            + file_name: str
+            + file_path: Path
         }
         DataActor <|-- XDFData
 
@@ -189,13 +192,13 @@ package "Dataset Pruner" {
         DatasetPruner --> Loader
 
 
-        abstract class FileLoader <<planned>> {
+        abstract class FileLoader <<implemented>> {
             + def load_file(path: Path): list[DataActor]
         }
         FileLoader ..> DataActor
 
 
-        class FileLoaderRegistry <<planned>> {
+        class FileLoaderRegistry <<implemented>> {
             + register(suffix: str): Callable
             + get(suffix: str): FileLoader
             + known_suffixes(): set[str]
@@ -204,7 +207,7 @@ package "Dataset Pruner" {
         Loader --> FileLoaderRegistry
 
 
-        class XdfLoader <<planned>> {
+        class XdfLoader <<implemented>> {
 
         }
         FileLoader <|.. XdfLoader
