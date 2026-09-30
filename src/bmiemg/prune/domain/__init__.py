@@ -1,4 +1,4 @@
 from .protocol_registry import ProtocolRegistry
-from .data_actor import DataActor
+from .actors import DataActor, XdfData
 
-__all__ = ["ProtocolRegistry", "DataActor"]
+__all__ = ["ProtocolRegistry", "DataActor", "XdfData"]
