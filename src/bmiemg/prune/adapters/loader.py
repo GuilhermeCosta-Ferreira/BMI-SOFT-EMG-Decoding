@@ -2,14 +2,12 @@
 # 0. Section: IMPORTS
 # ================================================================
 from pathlib import Path
-from collections import Counter
 from dataclasses import dataclass
 from collections import defaultdict
 
 from .source import Source
 from ..domain import DataActor
-
-KNOWN_FILE_TYPES: list[str] = [".xdf"]
+from .file_loaders import FileLoaderRegistry
 
 
 
@@ -21,33 +19,51 @@ class Loader:
     source: Source
 
     def load(self, source_names: list[str]) -> list[DataActor]:
+        known_suffixes = FileLoaderRegistry.known_suffixes()
+
+        actors: list[DataActor] = []
         for source_str in source_names:
             source_path = Path(source_str)
             full_path = self.source.raw_data_dir(source_path)
 
             files_present = [p for p in full_path.rglob("*") if p.is_file()]
-            file_types = {p.suffix.lower() for p in files_present}
 
             files_by_type: dict[str, list[Path]] = defaultdict(list)
             for p in files_present:
                 file_suffix = p.suffix.lower()
-                if file_suffix not in KNOWN_FILE_TYPES:
+                if file_suffix not in known_suffixes:
                     continue
                 files_by_type[file_suffix].append(p)
 
             _print_readable_summary(source_str, files_present)
 
             for file_suffix, files in files_by_type.items():
-                pass
+                loader = FileLoaderRegistry.get(file_suffix)
+                for file in files:
+                    actors.append(loader.load_file(file))
+
+        return list(actors)
+
 
 
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
 def _print_readable_summary(source_str: str, files_present: list[Path]) -> None:
+    known = FileLoaderRegistry.known_suffixes()
     types = {p.suffix.lower() for p in files_present}
-    n_readable = sum(p.suffix.lower() in KNOWN_FILE_TYPES for p in files_present)
+        return actors
+
+
+
+# ──────────────────────────────────────────────────────
+# 1.1 Subsection: Helper Functions
+# ──────────────────────────────────────────────────────
+def _print_readable_summary(source_str: str, files_present: list[Path]) -> None:
+    known = FileLoaderRegistry.known_suffixes()
+    types = {p.suffix.lower() for p in files_present}
+    n_readable = sum(p.suffix.lower() in known for p in files_present)
     pct = 100 * n_readable / len(files_present) if files_present else 0.0
 
     print(f"[{source_str}] readable: {n_readable}/{len(files_present)} ({pct:.1f}%)")
-    print(f"[{source_str}] not read: {sorted(types - set(KNOWN_FILE_TYPES))}")
+    print(f"[{source_str}] not read: {sorted(types - known)}")

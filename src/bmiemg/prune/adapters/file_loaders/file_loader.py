@@ -13,5 +13,5 @@ from ...domain import DataActor
 # ================================================================
 class FileLoader(ABC):
     @abstractmethod
-    def load_file(self, path: Path) -> list[DataActor]:
+    def load_file(self, path: Path) -> DataActor:
         raise NotImplementedError
