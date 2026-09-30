@@ -103,9 +103,7 @@ package "Download" {
 package "Dataset Pruner" {
     package "Service Layer" #E8F5E9 {
         class DatasetPruner <<partial>> {
-            + dataset_source_name: str
-            + protocol_name: str
-            + is_raw_data: bool
+            + source_name: list[str]
 
             - _source: Source
             - _loader: Loader
@@ -188,6 +186,7 @@ package "Dataset Pruner" {
             + load(): list[DataActor]
         }
         Loader ..> DataActor
+        DatasetPruner --> Loader
 
 
         interface ArchiveRawLoader <<planned>> {
