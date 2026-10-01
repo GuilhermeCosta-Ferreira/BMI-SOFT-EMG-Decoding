@@ -141,12 +141,11 @@ package "Dataset Pruner" {
 
 
         interface Protocol <<implemented>> {
-            + name: ClassVar[str]
-
-            + def apply(actors: list[DataActor], steps: list[PruneStep]): list[DataActor]
+            + steps: Sequence[PruneStep[Any, Any]]
+            + specs: Sequence[PruneSpecs]
         }
-        Protocol ..> DataActor
-        Protocol ..> PruneStep
+        Protocol --> PruneSpecs
+        Protocol --> PruneStep
 
 
         class ProtocolRegistry <<implemented>> {
@@ -162,13 +161,19 @@ package "Dataset Pruner" {
             + file_name: str
             + file_path: Path
         }
-        DataActor <|-- XDFData
+        DataActor <|-- XdfData
 
 
-        class PruneBadData <<planned>> {
+        class RemoveSessionStep <<implemented>> {
 
         }
-        PruneStep <|.. PruneBadData
+        PruneStep <|.. RemoveSessionStep
+
+
+        class RemoveSessionSpecs <<implemented>> {
+
+        }
+        PruneSpecs <|.. RemoveSessionSpecs
     }
 
 
