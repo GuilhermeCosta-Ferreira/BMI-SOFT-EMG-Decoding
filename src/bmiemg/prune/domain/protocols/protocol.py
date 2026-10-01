@@ -3,7 +3,7 @@
 # ================================================================
 from abc import ABC
 from typing import Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from collections.abc import Sequence
 
 from ..steps import PruneSpecs, PruneStep
@@ -15,5 +15,5 @@ from ..steps import PruneSpecs, PruneStep
 # ================================================================
 @dataclass
 class Protocol(ABC):
-    steps: Sequence[PruneStep[Any, Any]]
-    specs: Sequence[PruneSpecs]
+    steps: Sequence[PruneStep[Any, Any]] = field(default_factory=list)
+    specs: Sequence[PruneSpecs] = field(default_factory=list)
