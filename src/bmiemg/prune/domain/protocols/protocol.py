@@ -9,7 +9,6 @@ from collections.abc import Sequence
 from ..steps import PruneSpecs, PruneStep
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

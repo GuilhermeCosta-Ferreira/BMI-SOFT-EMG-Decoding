@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from .file_loader import FileLoader
 
 
-
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
@@ -18,12 +17,15 @@ class FileLoaderRegistry:
     _loaders: ClassVar[dict[str, type["FileLoader"]]] = {}
 
     @classmethod
-    def register(cls, suffix: str) -> Callable[[type["FileLoader"]], type["FileLoader"]]:
+    def register(
+        cls, suffix: str
+    ) -> Callable[[type["FileLoader"]], type["FileLoader"]]:
         def decorator(loader_cls: type["FileLoader"]) -> type["FileLoader"]:
             if suffix in cls._loaders:
                 raise ValueError(f"Suffix {suffix!r} already registered")
             cls._loaders[suffix] = loader_cls
             return loader_cls
+
         return decorator
 
     @classmethod

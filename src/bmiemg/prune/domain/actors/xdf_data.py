@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from .data_actor import DataActor
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

@@ -10,7 +10,6 @@ from ...domain import DataActor, XdfData
 from .file_loader_registry import FileLoaderRegistry
 
 
-
 # ================================================================
 # 1. Section: Class definition
 # ================================================================

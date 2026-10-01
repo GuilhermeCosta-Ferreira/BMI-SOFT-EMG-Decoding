@@ -6,7 +6,6 @@ from typing import ClassVar
 from dataclasses import dataclass
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

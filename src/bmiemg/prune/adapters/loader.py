@@ -10,7 +10,6 @@ from ..domain import DataActor
 from .file_loaders import FileLoaderRegistry
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -43,7 +42,6 @@ class Loader:
                     actors.append(loader.load_file(file))
 
         return actors
-
 
 
 # ──────────────────────────────────────────────────────

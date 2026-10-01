@@ -6,7 +6,6 @@ from typing import Any, ClassVar, Self
 from dataclasses import dataclass, replace
 
 
-
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
