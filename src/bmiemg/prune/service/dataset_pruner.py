@@ -2,8 +2,8 @@
 # 0. Section: IMPORTS
 # ================================================================
 from pathlib import Path
-from pprint import pprint
 from dataclasses import dataclass, field
+from typing import Any
 
 
 from ..adapters import Source, Loader
@@ -28,32 +28,34 @@ class DatasetPruner:
         self._source = Source(data_dir=self._data_dir)
         self._loader = Loader(source=self._source)
 
-    def run(self, protocol_name: str | None):
+
+
+    # ================================================================
+    # 2. Section: MAIN FUNCTIONS
+    # ================================================================
+    def run(self, protocol_name: str | None) -> list[DataActor]:
         # 1. Load all the actors into the scene
         actors = self._loader.load(self.source_name)
 
         # 2. Load all the steps into the scene
         steps, specs = self._load_steps(protocol_name)
 
+        # 3. Apply the steps to the actors
         pruned_actors = self.apply(actors, steps, specs)
 
-    def apply(self, actors: list[DataActor], steps: list[PruneStep], specs: list[PruneSpecs]) -> list[DataActor]:
-        before = [p.file_name for p in actors]
-        pprint(before)
-        pprint(len(before))
+        return pruned_actors
 
+    def apply(self, actors: list[DataActor], steps: list[PruneStep], specs: list[PruneSpecs]) -> list[DataActor]:
         for step, spec in zip(steps, specs):
             actors = step.apply(actors)
 
-        after = [p.file_name for p in actors]
-        pprint(after)
-        pprint(len(after))
         return actors
+
 
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
-    def _load_steps(self, protocol_name: str | None) -> tuple[list[PruneStep], list[PruneSpecs]]:
+    def _load_steps(self, protocol_name: str | None) -> tuple[list[PruneStep[Any, Any]], list[PruneSpecs]]:
         if self.custom_steps and self.custom_specs:
             steps = self.custom_steps
             specs = self.custom_specs
