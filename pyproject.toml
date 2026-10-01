@@ -43,5 +43,7 @@ dev = [
     "black (>=26.3.1,<27.0.0)",
     "pylint (>=4.0.5,<5.0.0)",
     "classpy @ git+https://github.com/GuilhermeCosta-Ferreira/ClassyPython.git",
-    "docformatter (>=1.7.8,<2.0.0)"
+    "docformatter (>=1.7.8,<2.0.0)",
+    "ruff (>=0.16.9,<0.17.0)",
+    "pyright (>=1.1.414,<2.0.0)"
 ]
