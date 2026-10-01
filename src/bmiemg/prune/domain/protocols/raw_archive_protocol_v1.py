@@ -21,7 +21,11 @@ class RawArchiveProtocolV1(Protocol):
     specs: Sequence[PruneSpecs] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        remove_sessions = RemoveSessionSpecs(files_to_remove=[""])
+        remove_sessions = RemoveSessionSpecs(
+            files_to_remove=[
+                "sub-05_ses-04_task-Down_run-01_raw",
+            ]
+        )
         self.specs = [remove_sessions]
 
         self.steps = [RemoveSessionStep(remove_sessions)]
