@@ -5,7 +5,7 @@ from typing import ClassVar
 from dataclasses import dataclass
 from collections.abc import Callable
 
-from .protocol import Protocol
+from .protocols import Protocol
 
 
 
