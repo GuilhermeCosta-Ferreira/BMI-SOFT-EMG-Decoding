@@ -2,9 +2,11 @@
 # 0. Section: IMPORTS
 # ================================================================
 from abc import ABC
+from typing import Any
 from dataclasses import dataclass
+from collections.abc import Sequence
 
-from ..steps import PruneStep, PruneSpecs
+from ..steps import PruneSpecs, PruneStep
 
 
 
@@ -13,5 +15,5 @@ from ..steps import PruneStep, PruneSpecs
 # ================================================================
 @dataclass
 class Protocol(ABC):
-    steps: list[PruneStep]
-    specs: list[PruneSpecs]
+    steps: Sequence[PruneStep[Any, Any]]
+    specs: Sequence[PruneSpecs]
