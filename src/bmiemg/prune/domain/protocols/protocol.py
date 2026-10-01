@@ -1,12 +1,10 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from abc import ABC, abstractmethod
-from typing import ClassVar
+from abc import ABC
 from dataclasses import dataclass
 
-from .actors import DataActor
-from .prune_step import PruneStep
+from ..steps import PruneStep, PruneSpecs
 
 
 
@@ -15,8 +13,5 @@ from .prune_step import PruneStep
 # ================================================================
 @dataclass
 class Protocol(ABC):
-    name: ClassVar
-
-    @abstractmethod
-    def apply(self, actors: list[DataActor]) -> list[DataActor]:
-        raise NotImplementedError
+    steps: list[PruneStep]
+    specs: list[PruneSpecs]
