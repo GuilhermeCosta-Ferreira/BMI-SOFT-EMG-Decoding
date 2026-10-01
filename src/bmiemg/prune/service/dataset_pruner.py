@@ -1,9 +1,10 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from pathlib import Path
-from dataclasses import dataclass, field
 from typing import Any
+from pathlib import Path
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 
 
 from ..adapters import Source, Loader
@@ -45,7 +46,7 @@ class DatasetPruner:
 
         return pruned_actors
 
-    def apply(self, actors: list[DataActor], steps: list[PruneStep], specs: list[PruneSpecs]) -> list[DataActor]:
+    def apply(self, actors: list[DataActor], steps: Sequence[PruneStep[Any, Any]], specs: Sequence[PruneSpecs]) -> list[DataActor]:
         for step, spec in zip(steps, specs):
             actors = step.apply(actors)
 
@@ -55,7 +56,7 @@ class DatasetPruner:
 # ──────────────────────────────────────────────────────
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
-    def _load_steps(self, protocol_name: str | None) -> tuple[list[PruneStep[Any, Any]], list[PruneSpecs]]:
+    def _load_steps(self, protocol_name: str | None) -> tuple[Sequence[PruneStep[Any, Any]], Sequence[PruneSpecs]]:
         if self.custom_steps and self.custom_specs:
             steps = self.custom_steps
             specs = self.custom_specs
