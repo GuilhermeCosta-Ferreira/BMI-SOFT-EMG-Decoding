@@ -11,7 +11,6 @@ from ..adapters import Source, Loader
 from ..domain import ProtocolRegistry, PruneStep, PruneSpecs, DataActor
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -29,8 +28,6 @@ class DatasetPruner:
         self._source = Source(data_dir=self._data_dir)
         self._loader = Loader(source=self._source)
 
-
-
     # ================================================================
     # 2. Section: MAIN FUNCTIONS
     # ================================================================
@@ -46,17 +43,23 @@ class DatasetPruner:
 
         return pruned_actors
 
-    def apply(self, actors: list[DataActor], steps: Sequence[PruneStep[Any, Any]], specs: Sequence[PruneSpecs]) -> list[DataActor]:
+    def apply(
+        self,
+        actors: list[DataActor],
+        steps: Sequence[PruneStep[Any, Any]],
+        specs: Sequence[PruneSpecs],
+    ) -> list[DataActor]:
         for step, spec in zip(steps, specs):
             actors = step.apply(actors)
 
         return actors
 
-
-# ──────────────────────────────────────────────────────
-# 1.1 Subsection: Helper Functions
-# ──────────────────────────────────────────────────────
-    def _load_steps(self, protocol_name: str | None) -> tuple[Sequence[PruneStep[Any, Any]], Sequence[PruneSpecs]]:
+    # ──────────────────────────────────────────────────────
+    # 1.1 Subsection: Helper Functions
+    # ──────────────────────────────────────────────────────
+    def _load_steps(
+        self, protocol_name: str | None
+    ) -> tuple[Sequence[PruneStep[Any, Any]], Sequence[PruneSpecs]]:
         if self.custom_steps and self.custom_specs:
             steps = self.custom_steps
             specs = self.custom_specs

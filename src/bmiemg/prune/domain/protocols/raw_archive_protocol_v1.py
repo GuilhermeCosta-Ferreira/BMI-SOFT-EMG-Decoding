@@ -10,7 +10,6 @@ from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

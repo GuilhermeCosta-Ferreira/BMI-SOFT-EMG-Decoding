@@ -8,7 +8,6 @@ from collections.abc import Callable
 from .protocols import Protocol
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -23,6 +22,7 @@ class ProtocolRegistry:
                 raise ValueError(f"Source {source!r} already registered")
             cls._strategies[source] = strategy_cls
             return strategy_cls
+
         return decorator
 
     @classmethod

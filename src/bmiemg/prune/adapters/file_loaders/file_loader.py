@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from ...domain import DataActor
 
 
-
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
