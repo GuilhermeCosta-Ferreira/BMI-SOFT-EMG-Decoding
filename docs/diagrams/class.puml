@@ -129,7 +129,7 @@ package "Dataset Pruner" {
         }
 
 
-        interface PruneStep <<implemented>> {
+        abstract class PruneStep <<implemented>> {
             + name: ClassVar[str]
             + config: PruneSpecs
 
@@ -140,12 +140,12 @@ package "Dataset Pruner" {
         DatasetPruner --> PruneStep
 
 
-        interface Protocol <<implemented>> {
+        abstract class Protocol <<implemented>> {
             + steps: Sequence[PruneStep[Any, Any]]
             + specs: Sequence[PruneSpecs]
         }
-        Protocol --> PruneSpecs
-        Protocol --> PruneStep
+        Protocol o-- PruneSpecs
+        Protocol o-- PruneStep
 
 
         class ProtocolRegistry <<implemented>> {
@@ -167,13 +167,14 @@ package "Dataset Pruner" {
         class RemoveSessionStep <<implemented>> {
 
         }
-        PruneStep <|.. RemoveSessionStep
+        PruneStep <|-- RemoveSessionStep
 
 
         class RemoveSessionSpecs <<implemented>> {
-
+            + name: ClassVar[str] = "remove_sessions"
+            + files_to_remove: list[str]
         }
-        PruneSpecs <|.. RemoveSessionSpecs
+        PruneSpecs <|-- RemoveSessionSpecs
     }
 
 
