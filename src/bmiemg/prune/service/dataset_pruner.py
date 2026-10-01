@@ -2,10 +2,12 @@
 # 0. Section: IMPORTS
 # ================================================================
 from pathlib import Path
+from pprint import pprint
 from dataclasses import dataclass, field
 
+
 from ..adapters import Source, Loader
-from ..domain import ProtocolRegistry
+from ..domain import ProtocolRegistry, PruneStep, PruneSpecs, DataActor
 
 
 
@@ -16,6 +18,9 @@ from ..domain import ProtocolRegistry
 class DatasetPruner:
     source_name: list[str]
 
+    custom_steps: list[PruneStep] = field(default_factory=list)
+    custom_specs: list[PruneSpecs] = field(default_factory=list)
+
     _data_dir: Path = Path("data/")
     _protocol_registry: ProtocolRegistry = field(default_factory=ProtocolRegistry)
 
@@ -23,7 +28,39 @@ class DatasetPruner:
         self._source = Source(data_dir=self._data_dir)
         self._loader = Loader(source=self._source)
 
-    def run(self, protocol_name: str):
-        #protocol = self._protocol_registry.get(protocol_name)
-        self._loader.load(self.source_name)
-        #return protocol.apply(...)
+    def run(self, protocol_name: str | None):
+        # 1. Load all the actors into the scene
+        actors = self._loader.load(self.source_name)
+
+        # 2. Load all the steps into the scene
+        steps, specs = self._load_steps(protocol_name)
+
+        pruned_actors = self.apply(actors, steps, specs)
+
+    def apply(self, actors: list[DataActor], steps: list[PruneStep], specs: list[PruneSpecs]) -> list[DataActor]:
+        before = [p.file_name for p in actors]
+        pprint(before)
+        pprint(len(before))
+
+        for step, spec in zip(steps, specs):
+            actors = step.apply(actors)
+
+        after = [p.file_name for p in actors]
+        pprint(after)
+        pprint(len(after))
+        return actors
+
+# ──────────────────────────────────────────────────────
+# 1.1 Subsection: Helper Functions
+# ──────────────────────────────────────────────────────
+    def _load_steps(self, protocol_name: str | None) -> tuple[list[PruneStep], list[PruneSpecs]]:
+        if self.custom_steps and self.custom_specs:
+            steps = self.custom_steps
+            specs = self.custom_specs
+        elif protocol_name is not None:
+            steps = self._protocol_registry.get(protocol_name).steps
+            specs = self._protocol_registry.get(protocol_name).specs
+        else:
+            raise ValueError("No protocol name provided and no custom steps defined")
+
+        return steps, specs
