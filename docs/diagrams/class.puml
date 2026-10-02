@@ -170,11 +170,24 @@ package "Dataset Pruner" {
         PruneStep <|-- RemoveSessionStep
 
 
+        class SignalSplitStep <<implemented>> {
+
+        }
+        PruneStep <|-- SignalSplitStep
+
+
         class RemoveSessionSpecs <<implemented>> {
             + name: ClassVar[str] = "remove_sessions"
             + files_to_remove: list[str]
         }
         PruneSpecs <|-- RemoveSessionSpecs
+
+
+        class SignalSplitSpecs <<implemented>> {
+            + name: ClassVar[str] = "signal_split"
+            + signal: Signal
+        }
+        PruneSpecs <|-- SignalSplitSpecs
     }
 
 
