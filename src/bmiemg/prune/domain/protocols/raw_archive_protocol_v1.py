@@ -5,7 +5,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..steps import PruneSpecs, PruneStep, RemoveSessionSpecs, RemoveSessionStep, SignalSplitStep, SignalSplitSpecs
+from ..steps import (
+    PruneSpecs,
+    PruneStep,
+    RemoveSessionSpecs,
+    RemoveSessionStep,
+    SignalSplitStep,
+    SignalSplitSpecs,
+)
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
 
@@ -25,13 +32,10 @@ class RawArchiveProtocolV1(Protocol):
                 "sub-05_ses-04_task-Down_run-01_raw",
                 "sub-P008_ses-S001_task-Default_run-001_emg_kraken",
                 "sub-P008_ses-S002_task-Default_run-001_emg_kraken",
-                "sub-P008_ses-S003_task-Default_run-001_emg_kraken"
+                "sub-P008_ses-S003_task-Default_run-001_emg_kraken",
             ]
         )
         signal_split = SignalSplitSpecs(signal="emg")
 
         self.specs = [remove_sessions, signal_split]
-        self.steps = [
-            RemoveSessionStep(remove_sessions),
-            SignalSplitStep(signal_split)
-        ]
+        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split)]

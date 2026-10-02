@@ -5,7 +5,6 @@ from .remove_session_specs import RemoveSessionSpecs
 from .signal_split_step import SignalSplitStep
 from .signal_split_specs import SignalSplitSpecs
 
-
 __all__ = [
     "PruneStep",
     "PruneSpecs",
