@@ -19,7 +19,6 @@ _ACCEPTED_TYPES: dict[Signal, set[str]] = {
 _MARKERS_TYPE = "markers"
 
 
-
 # ================================================================
 # 2. Section: Functions
 # ================================================================
@@ -29,7 +28,6 @@ class SignalSplitStep(PruneStep[SignalSplitSpecs, XdfData]):
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:
         return [self._split_actor(actor) for actor in actors]
-
 
     # ──────────────────────────────────────────────────────
     # 2.1 Subsection: Helper Functions
@@ -82,6 +80,7 @@ def _select_channels(
 
     return new_stream
 
+
 def _channels(stream: dict) -> list[dict] | None:
     desc = stream.get("info", {}).get("desc")
     if not desc or not desc[0]:
@@ -91,11 +90,14 @@ def _channels(stream: dict) -> list[dict] | None:
     except (KeyError, IndexError, TypeError):
         return None
 
+
 def _channel_type(channel: dict) -> str | None:
     return _first_lower(channel.get("type"))
 
+
 def _stream_type(stream: dict) -> str | None:
     return _first_lower(stream.get("info", {}).get("type"))
+
 
 def _first_lower(value: Any) -> str | None:
     if not value:
