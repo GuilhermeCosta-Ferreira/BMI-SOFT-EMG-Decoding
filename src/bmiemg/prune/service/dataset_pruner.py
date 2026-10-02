@@ -1,6 +1,8 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+import pickle
+
 from typing import Any
 from pathlib import Path
 from collections.abc import Sequence
@@ -39,7 +41,9 @@ class DatasetPruner:
         steps, specs = self._load_steps(protocol_name)
 
         # 3. Apply the steps to the actors
+        print(f"Memory usage: {len(pickle.dumps(actors)) / 1024**2:.2f} MB")
         pruned_actors = self.apply(actors, steps, specs)
+        print(f"Memory usage after pruning: {len(pickle.dumps(pruned_actors)) / 1024**2:.2f} MB")
 
         return pruned_actors
 
