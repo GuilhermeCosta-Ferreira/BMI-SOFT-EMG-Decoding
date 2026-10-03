@@ -155,8 +155,7 @@ package "Dataset Pruner" {
         ProtocolRegistry ..> Protocol
 
 
-        class XdfData <<implemented>> {
-            + streams: list[dict]
+        abstract class XdfActor <<implemented>> {
             + file_header: dict
             + file_name: str
             + file_path: Path
@@ -170,7 +169,20 @@ package "Dataset Pruner" {
             + date_folder: Path
             + date: date
         }
-        DataActor <|-- XdfData
+        DataActor <|-- XdfActor
+
+
+        class XdfData <<implemented>> {
+            + streams: list[dict]
+        }
+        XdfActor <|-- XdfData
+
+
+        class TrialData <<implemented>> {
+            + signal: NDArray
+            + markers: NDArray
+        }
+        XdfActor <|-- TrialData
 
 
         class RemoveSessionStep <<implemented>> {
