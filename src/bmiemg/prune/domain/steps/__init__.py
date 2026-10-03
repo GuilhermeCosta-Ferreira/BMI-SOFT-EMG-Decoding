@@ -8,6 +8,8 @@ from .protocol_definer_step import ProtocolDefinerStep
 from .protocol_definer_specs import ProtocolDefinerSpecs
 from .signal_unwarp_step import SignalUnwarpStep
 from .signal_unwarp_specs import SignalUnwarpSpecs
+from .marker_unification_step import MarkerUnificationStep
+from .marker_unification_specs import MarkerUnificationSpecs
 
 
 __all__ = [
@@ -21,4 +23,6 @@ __all__ = [
     "ProtocolDefinerSpecs",
     "SignalUnwarpStep",
     "SignalUnwarpSpecs",
+    "MarkerUnificationStep",
+    "MarkerUnificationSpecs",
 ]
