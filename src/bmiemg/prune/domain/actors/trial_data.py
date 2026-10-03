@@ -13,5 +13,6 @@ from .xdf_actor import XdfActor
 @dataclass(kw_only=True)
 class TrialData(XdfActor):
     signal: NDArray  # shape (channels, time)
-    channel_names: list[str]
     markers: NDArray  # shape (1, time)
+    channel_names: list[str]
+    sfreq: float

@@ -19,6 +19,8 @@ from ..steps import (
     SignalUnwarpStep,
     MarkerUnificationSpecs,
     MarkerUnificationStep,
+    AnalogueFilterSpecs,
+    AnalogueFilterStep,
 )
 from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
@@ -114,6 +116,9 @@ class RawArchiveProtocolV1(Protocol):
             cuttoff_dates=[date(2025, 11, 21)]
         )
         signal_unwarp = SignalUnwarpSpecs()
+        analogue_filter = AnalogueFilterSpecs(
+            btype="bandpass", cutoff=(20.0, 500.0), order=1
+        )
         marker_unification = MarkerUnificationSpecs(
             source_schemas=_MARKER_SOURCE_SCHEMAS,
             target=_CANONICAL_MARKER_MAP,
@@ -124,6 +129,7 @@ class RawArchiveProtocolV1(Protocol):
             signal_split,
             protocol_definer,
             signal_unwarp,
+            analogue_filter,
             marker_unification,
         ]
         self.steps = [
@@ -131,5 +137,6 @@ class RawArchiveProtocolV1(Protocol):
             SignalSplitStep(signal_split),
             ProtocolDefinerStep(protocol_definer),
             SignalUnwarpStep(signal_unwarp),
+            AnalogueFilterStep(analogue_filter),
             MarkerUnificationStep(marker_unification),
         ]
