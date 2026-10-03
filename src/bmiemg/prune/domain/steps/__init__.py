@@ -6,6 +6,8 @@ from .signal_split_step import SignalSplitStep
 from .signal_split_specs import SignalSplitSpecs
 from .protocol_definer_step import ProtocolDefinerStep
 from .protocol_definer_specs import ProtocolDefinerSpecs
+from .signal_unwarp_step import SignalUnwarpStep
+from .signal_unwarp_specs import SignalUnwarpSpecs
 
 
 __all__ = [
@@ -17,4 +19,6 @@ __all__ = [
     "SignalSplitSpecs",
     "ProtocolDefinerStep",
     "ProtocolDefinerSpecs",
+    "SignalUnwarpStep",
+    "SignalUnwarpSpecs",
 ]
