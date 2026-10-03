@@ -48,13 +48,25 @@ class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
     def _build_markers(
         self, marker_stream: dict, signal_stream: dict
     ) -> NDArray:
+        """Spread marker events onto a dense 1-by-time array.
+
+        Each event's value stays active from its own onset until the next
+        event's onset (the last event holds until the end of the recording);
+        samples before the first event keep the background value.
+        """
         signal_ts = np.asarray(signal_stream["time_stamps"], dtype=float)
         markers = np.full((1, signal_ts.size), self.config.background_marker, dtype=int)
 
         marker_ts = np.asarray(marker_stream["time_stamps"], dtype=float)
-        for value, timestamp in zip(marker_stream["time_series"], marker_ts):
-            sample = _nearest_sample(signal_ts, timestamp)
-            markers[0, sample] = _marker_value(value)
+        order = np.argsort(marker_ts)
+        series = list(marker_stream["time_series"])
+
+        onsets = [_nearest_sample(signal_ts, float(marker_ts[i])) for i in order]
+        values = [_marker_value(series[i]) for i in order]
+
+        for pos, (start, value) in enumerate(zip(onsets, values)):
+            end = onsets[pos + 1] if pos + 1 < len(onsets) else signal_ts.size
+            markers[0, start:end] = value
 
         return markers
 
