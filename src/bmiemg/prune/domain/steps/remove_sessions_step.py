@@ -13,7 +13,7 @@ from .remove_session_specs import RemoveSessionSpecs
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class RemoveSessionStep(PruneStep[RemoveSessionSpecs, XdfData]):
+class RemoveSessionStep(PruneStep[RemoveSessionSpecs, XdfData, XdfData]):
     name: ClassVar[str] = "remove_session"
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:

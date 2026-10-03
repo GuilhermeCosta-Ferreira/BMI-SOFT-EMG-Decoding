@@ -13,10 +13,10 @@ from ..actors import DataActor
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class PruneStep[SpecT: PruneSpecs, ActorT: DataActor](ABC):
+class PruneStep[SpecT: PruneSpecs, InT: DataActor, OutT: DataActor](ABC):
     name: ClassVar[str]
     config: SpecT
 
     @abstractmethod
-    def apply(self, actors: list[ActorT]) -> list[ActorT]:
+    def apply(self, actors: list[InT]) -> list[OutT]:
         pass

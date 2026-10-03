@@ -47,7 +47,7 @@ class DatasetPruner:
     def apply(
         self,
         actors: list[DataActor],
-        steps: Sequence[PruneStep[Any, Any]],
+        steps: Sequence[PruneStep[Any, Any, Any]],
         specs: Sequence[PruneSpecs],
     ) -> list[DataActor]:
         for step, spec in tqdm(
@@ -62,7 +62,7 @@ class DatasetPruner:
     # ──────────────────────────────────────────────────────
     def _load_steps(
         self, protocol_name: str | None
-    ) -> tuple[Sequence[PruneStep[Any, Any]], Sequence[PruneSpecs]]:
+    ) -> tuple[Sequence[PruneStep[Any, Any, Any]], Sequence[PruneSpecs]]:
         if self.custom_steps and self.custom_specs:
             steps = self.custom_steps
             specs = self.custom_specs

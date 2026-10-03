@@ -14,5 +14,5 @@ from ..steps import PruneSpecs, PruneStep
 # ================================================================
 @dataclass
 class Protocol(ABC):
-    steps: Sequence[PruneStep[Any, Any]] = field(default_factory=list)
+    steps: Sequence[PruneStep[Any, Any, Any]] = field(default_factory=list)
     specs: Sequence[PruneSpecs] = field(default_factory=list)
