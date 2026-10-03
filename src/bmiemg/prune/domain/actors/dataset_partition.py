@@ -3,8 +3,9 @@
 # ================================================================
 from dataclasses import dataclass
 from typing import ClassVar, Literal
-from numpy.typing import NDArray
+
 from .data_actor import DataActor
+from .trial_data import TrialData
 
 PartitionName = Literal["train", "val", "test"]
 
@@ -16,5 +17,4 @@ PartitionName = Literal["train", "val", "test"]
 class DatasetPartition(DataActor):
     name: ClassVar[str] = "dataset_partition"
     partition_name: PartitionName
-    signal: NDArray | None
-    labels: NDArray | None
+    trials: list[TrialData]

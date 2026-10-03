@@ -21,6 +21,8 @@ from ..steps import (
     MarkerUnificationStep,
     AnalogueFilterSpecs,
     AnalogueFilterStep,
+    TTVSplitSpecs,
+    TTVSplitStep,
 )
 from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
@@ -123,6 +125,12 @@ class RawArchiveProtocolV1(Protocol):
             source_schemas=_MARKER_SOURCE_SCHEMAS,
             target=_CANONICAL_MARKER_MAP,
         )
+        ttv_split = TTVSplitSpecs(
+            train_ratio=0.7,
+            val_ratio=0.15,
+            test_ratio=0.15,
+            user_balance=True,
+        )
 
         self.specs = [
             remove_sessions,
@@ -131,6 +139,7 @@ class RawArchiveProtocolV1(Protocol):
             signal_unwarp,
             analogue_filter,
             marker_unification,
+            ttv_split,
         ]
         self.steps = [
             RemoveSessionStep(remove_sessions),
@@ -139,4 +148,5 @@ class RawArchiveProtocolV1(Protocol):
             SignalUnwarpStep(signal_unwarp),
             AnalogueFilterStep(analogue_filter),
             MarkerUnificationStep(marker_unification),
+            TTVSplitStep(ttv_split),
         ]
