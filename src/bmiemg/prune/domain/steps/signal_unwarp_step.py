@@ -25,6 +25,7 @@ class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
     def apply(self, actors: list[XdfData]) -> list[TrialData]:
         return [self._unwarp_actor(actor) for actor in actors]
 
+
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
@@ -43,17 +44,12 @@ class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
             signal=signal,
             channel_names=channel_names,
             markers=markers,
+            sfreq=float(signal_stream["info"]["nominal_srate"][0]),
         )
 
     def _build_markers(
         self, marker_stream: dict, signal_stream: dict
     ) -> NDArray:
-        """Spread marker events onto a dense 1-by-time array.
-
-        Each event's value stays active from its own onset until the next
-        event's onset (the last event holds until the end of the recording);
-        samples before the first event keep the background value.
-        """
         signal_ts = np.asarray(signal_stream["time_stamps"], dtype=float)
         markers = np.full((1, signal_ts.size), self.config.background_marker, dtype=int)
 
@@ -91,7 +87,6 @@ def _split_streams(streams: list[dict]) -> tuple[dict, dict]:
 
     return signal_stream, marker_stream
 
-
 def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     # Raw time_series is (time, channels); the signal matrix is (channels, time).
     signal = np.asarray(signal_stream["time_series"]).T
@@ -100,7 +95,6 @@ def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     channel_names = [str(chan["label"][0]) for chan in channels]
 
     return signal, channel_names
-
 
 def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
     right = int(np.searchsorted(signal_ts, timestamp))
@@ -114,12 +108,10 @@ def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
         return left
     return right
 
-
 def _marker_value(raw: Any) -> int:
     if isinstance(raw, (list, tuple, np.ndarray)):
         raw = raw[0]
     return int(float(str(raw).strip()))
-
 
 def _stream_type(stream: dict) -> str | None:
     value = stream.get("info", {}).get("type")

@@ -10,6 +10,8 @@ from .signal_unwarp_step import SignalUnwarpStep
 from .signal_unwarp_specs import SignalUnwarpSpecs
 from .marker_unification_step import MarkerUnificationStep
 from .marker_unification_specs import MarkerUnificationSpecs
+from .analogue_filter_step import AnalogueFilterStep
+from .analogue_filter_specs import AnalogueFilterSpecs
 
 
 __all__ = [
@@ -25,4 +27,6 @@ __all__ = [
     "SignalUnwarpSpecs",
     "MarkerUnificationStep",
     "MarkerUnificationSpecs",
+    "AnalogueFilterStep",
+    "AnalogueFilterSpecs",
 ]
