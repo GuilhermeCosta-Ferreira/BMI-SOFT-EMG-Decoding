@@ -15,6 +15,8 @@ from ..steps import (
     SignalSplitSpecs,
     ProtocolDefinerStep,
     ProtocolDefinerSpecs,
+    SignalUnwarpSpecs,
+    SignalUnwarpStep,
 )
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
@@ -42,6 +44,7 @@ class RawArchiveProtocolV1(Protocol):
         protocol_definer = ProtocolDefinerSpecs(
             cuttoff_dates=[date(2025, 11, 21)]
         )
+        signal_unwarp = SignalUnwarpSpecs()
 
-        self.specs = [remove_sessions, signal_split, protocol_definer]
-        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split), ProtocolDefinerStep(protocol_definer)]
+        self.specs = [remove_sessions, signal_split, protocol_definer, signal_unwarp]
+        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split), ProtocolDefinerStep(protocol_definer), SignalUnwarpStep(signal_unwarp)]
