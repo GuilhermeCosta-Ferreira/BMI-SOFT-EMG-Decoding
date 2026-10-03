@@ -18,4 +18,9 @@ class XdfLoader(FileLoader):
     def load_file(self, path: Path) -> DataActor:
         streams, file_header = pyxdf.load_xdf(path)
 
-        return XdfData(streams, file_header, path.stem, path)
+        return XdfData(
+            streams=streams,
+            file_header=file_header,
+            file_name=path.stem,
+            file_path=path,
+        )
