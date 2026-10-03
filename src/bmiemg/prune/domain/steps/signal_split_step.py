@@ -23,7 +23,7 @@ _MARKERS_TYPE = "markers"
 # 2. Section: Functions
 # ================================================================
 @dataclass
-class SignalSplitStep(PruneStep[SignalSplitSpecs, XdfData]):
+class SignalSplitStep(PruneStep[SignalSplitSpecs, XdfData, XdfData]):
     name: ClassVar[str] = "signal_split"
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:

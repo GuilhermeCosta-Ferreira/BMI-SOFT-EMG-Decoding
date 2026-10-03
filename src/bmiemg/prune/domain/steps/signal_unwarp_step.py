@@ -18,7 +18,7 @@ _MARKERS_TYPE = "markers"
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData]):
+class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
     name: ClassVar[str] = "signal_unwarp"
     config: SignalUnwarpSpecs
 

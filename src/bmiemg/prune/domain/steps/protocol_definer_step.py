@@ -14,7 +14,7 @@ from .protocol_definer_specs import ProtocolDefinerSpecs
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class ProtocolDefinerStep(PruneStep[ProtocolDefinerSpecs, XdfData]):
+class ProtocolDefinerStep(PruneStep[ProtocolDefinerSpecs, XdfData, XdfData]):
     name: ClassVar[str] = "protocol_definer"
     config: ProtocolDefinerSpecs
 
