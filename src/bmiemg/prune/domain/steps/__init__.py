@@ -4,6 +4,9 @@ from .remove_sessions_step import RemoveSessionStep
 from .remove_session_specs import RemoveSessionSpecs
 from .signal_split_step import SignalSplitStep
 from .signal_split_specs import SignalSplitSpecs
+from .protocol_definer_step import ProtocolDefinerStep
+from .protocol_definer_specs import ProtocolDefinerSpecs
+
 
 __all__ = [
     "PruneStep",
@@ -12,4 +15,6 @@ __all__ = [
     "RemoveSessionSpecs",
     "SignalSplitStep",
     "SignalSplitSpecs",
+    "ProtocolDefinerStep",
+    "ProtocolDefinerSpecs",
 ]

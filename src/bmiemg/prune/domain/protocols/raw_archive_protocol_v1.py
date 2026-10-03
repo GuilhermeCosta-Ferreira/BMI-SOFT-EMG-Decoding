@@ -1,9 +1,10 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+from typing import Any
+from datetime import date
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any
 
 from ..steps import (
     PruneSpecs,
@@ -12,6 +13,8 @@ from ..steps import (
     RemoveSessionStep,
     SignalSplitStep,
     SignalSplitSpecs,
+    ProtocolDefinerStep,
+    ProtocolDefinerSpecs,
 )
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
@@ -36,6 +39,9 @@ class RawArchiveProtocolV1(Protocol):
             ]
         )
         signal_split = SignalSplitSpecs(signal="emg")
+        protocol_definer = ProtocolDefinerSpecs(
+            cuttoff_dates=[date(2025, 11, 21)]
+        )
 
-        self.specs = [remove_sessions, signal_split]
-        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split)]
+        self.specs = [remove_sessions, signal_split, protocol_definer]
+        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split), ProtocolDefinerStep(protocol_definer)]
