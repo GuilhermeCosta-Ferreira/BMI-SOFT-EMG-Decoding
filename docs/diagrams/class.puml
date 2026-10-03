@@ -160,20 +160,32 @@ package "Dataset Pruner" {
             + file_header: dict
             + file_name: str
             + file_path: Path
+            + protocol_version: int = 0
+            + directory_structure: str = "bids_local"
+
+            + session_folder: Path
+            + session_number: int
+            + subject_folder: Path
+            + subject_number: int
+            + date_folder: Path
+            + date: date
         }
         DataActor <|-- XdfData
 
 
         class RemoveSessionStep <<implemented>> {
-
         }
         PruneStep <|-- RemoveSessionStep
 
 
         class SignalSplitStep <<implemented>> {
-
         }
         PruneStep <|-- SignalSplitStep
+
+
+        class ProtocolDefinerStep <<implemented>> {
+        }
+        PruneStep <|-- ProtocolDefinerStep
 
 
         class RemoveSessionSpecs <<implemented>> {
@@ -188,6 +200,13 @@ package "Dataset Pruner" {
             + signal: Signal
         }
         PruneSpecs <|-- SignalSplitSpecs
+
+
+        class ProtocolDefinerSpecs <<implemented>> {
+            + name: ClassVar[str] = "protocol_definer"
+            + cuttoff_dates: list[date]
+        }
+        PruneSpecs <|-- ProtocolDefinerSpecs
     }
 
 
