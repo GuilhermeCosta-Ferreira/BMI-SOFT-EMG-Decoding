@@ -17,9 +17,78 @@ from ..steps import (
     ProtocolDefinerSpecs,
     SignalUnwarpSpecs,
     SignalUnwarpStep,
+    MarkerUnificationSpecs,
+    MarkerUnificationStep,
 )
+from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
+
+
+# ================================================================
+# 1. Section: Marker maps
+# ================================================================
+# Target structure (XXDD) this protocol unifies its markers into.
+_CANONICAL_MARKER_MAP = CanonicalMarkerMap(
+    phases={
+        "undefined": 0,
+        "cue": 1,
+        "prep": 2,
+        "move": 3,
+        "return": 4,
+        "iti": 5,
+        "resting state, eyes open": 6,
+        "resting state, eyes closed": 7,
+        "start LabRecorder": 8,
+        "experiment finished": 9,
+        "test marker": 10,
+    },
+    movements={
+        "undefined": 0,
+        "open hand": 1,
+        "close hand": 2,
+        "rotate wrist right": 3,
+        "rotate wrist left": 4,
+        "pinch": 5,
+    },
+)
+
+_SPECIAL_TRIGGERS = {
+    9701: "resting state, eyes open",
+    9702: "resting state, eyes closed",
+    8888: "start LabRecorder",
+    8899: "experiment finished",
+    9999: "test marker",
+}
+
+_MARKER_SOURCE_SCHEMAS: dict[int, SourceMarkerSchema] = {
+    1: SourceMarkerSchema(
+        phase_pos=0,
+        movement_slice=(3, 5),
+        phase_map={1: "cue", 2: "prep", 3: "move", 4: "return", 5: "iti"},
+        movement_groups={
+            "open hand": [1, 2, 7],
+            "close hand": [3, 4, 5, 6, 8, 15, 16],
+            "rotate wrist right": [11, 12],
+            "rotate wrist left": [13, 14],
+            "pinch": [17],
+        },
+        special_triggers=_SPECIAL_TRIGGERS,
+    ),
+    2: SourceMarkerSchema(
+        phase_pos=0,
+        movement_slice=(3, 5),
+        phase_map={1: "cue", 3: "prep", 5: "move", 7: "return", 9: "iti"},
+        movement_groups={
+            "open hand": [1],
+            "close hand": [2, 3, 10, 11],
+            "rotate wrist right": [4, 5],
+            "rotate wrist left": [8, 9],
+            "pinch": [12],
+        },
+        special_triggers=_SPECIAL_TRIGGERS,
+    ),
+}
 
 
 # ================================================================
@@ -45,6 +114,22 @@ class RawArchiveProtocolV1(Protocol):
             cuttoff_dates=[date(2025, 11, 21)]
         )
         signal_unwarp = SignalUnwarpSpecs()
+        marker_unification = MarkerUnificationSpecs(
+            source_schemas=_MARKER_SOURCE_SCHEMAS,
+            target=_CANONICAL_MARKER_MAP,
+        )
 
-        self.specs = [remove_sessions, signal_split, protocol_definer, signal_unwarp]
-        self.steps = [RemoveSessionStep(remove_sessions), SignalSplitStep(signal_split), ProtocolDefinerStep(protocol_definer), SignalUnwarpStep(signal_unwarp)]
+        self.specs = [
+            remove_sessions,
+            signal_split,
+            protocol_definer,
+            signal_unwarp,
+            marker_unification,
+        ]
+        self.steps = [
+            RemoveSessionStep(remove_sessions),
+            SignalSplitStep(signal_split),
+            ProtocolDefinerStep(protocol_definer),
+            SignalUnwarpStep(signal_unwarp),
+            MarkerUnificationStep(marker_unification),
+        ]
