@@ -35,13 +35,13 @@ class Loader:
                     continue
                 files_by_type[file_suffix].append(p)
 
-            files_by_type[".xdf"] = files_by_type[".xdf"][:10]
+            #files_by_type[".xdf"] = files_by_type[".xdf"][1:2]
 
             _print_readable_summary(source_str, files_present)
 
-            for file_suffix, files in tqdm(files_by_type.items(), desc="Loading files"):
+            for file_suffix, files in files_by_type.items():
                 loader = FileLoaderRegistry.get(file_suffix)
-                for file in files:
+                for file in tqdm(files, desc="Loading files"):
                     actors.append(loader.load_file(file))
 
         return actors
