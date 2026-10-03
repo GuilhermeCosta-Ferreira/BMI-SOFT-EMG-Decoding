@@ -7,7 +7,6 @@ from pathlib import Path
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-
 from ..adapters import Source, Loader
 from ..domain import ProtocolRegistry, PruneStep, PruneSpecs, DataActor
 
