@@ -29,30 +29,35 @@ class XdfData(DataActor):
 
     @property
     def session_number(self) -> int | None:
-        if self.directory_structure == "bids_local":
-            return int(self.session_folder.name[3:])
+        folder = self.session_folder
+        if folder is not None:
+            return int(folder.name[3:])
         return None
 
     @property
     def subject_folder(self) -> Path | None:
-        if self.directory_structure == "bids_local":
-            return self.session_folder.parent
+        folder = self.session_folder
+        if folder is not None:
+            return folder.parent
         return None
 
     @property
     def subject_number(self) -> int | None:
-        if self.directory_structure == "bids_local":
-            return int(self.subject_folder.name[3:])
+        folder = self.subject_folder
+        if folder is not None:
+            return int(folder.name[3:])
         return None
 
     @property
     def date_folder(self) -> Path | None:
-        if self.directory_structure == "bids_local":
-            return self.subject_folder.parent
+        folder = self.subject_folder
+        if folder is not None:
+            return folder.parent
         return None
 
     @property
     def date(self) -> datetime | None:
-        if self.date_folder:
-            return datetime.fromisoformat(self.date_folder.name)
+        folder = self.date_folder
+        if folder is not None:
+            return datetime.fromisoformat(folder.name)
         return None
