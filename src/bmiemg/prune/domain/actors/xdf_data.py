@@ -1,9 +1,8 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from datetime import datetime
-
 from pathlib import Path
+from datetime import date
 from dataclasses import dataclass
 
 from .data_actor import DataActor
@@ -21,6 +20,11 @@ class XdfData(DataActor):
     directory_structure: str = "bids_local" # this assumes the current archive structure
     protocol_version: int = 0 # 0 is undefined
 
+
+
+    # ================================================================
+    # 2. Section: PROPERTIES
+    # ================================================================
     @property
     def session_folder(self) -> Path | None:
         if self.directory_structure == "bids_local":
@@ -31,7 +35,7 @@ class XdfData(DataActor):
     def session_number(self) -> int | None:
         folder = self.session_folder
         if folder is not None:
-            return int(folder.name[3:])
+            return int(folder.name[-2:])
         return None
 
     @property
@@ -45,7 +49,7 @@ class XdfData(DataActor):
     def subject_number(self) -> int | None:
         folder = self.subject_folder
         if folder is not None:
-            return int(folder.name[3:])
+            return int(folder.name[-2:])
         return None
 
     @property
@@ -56,8 +60,8 @@ class XdfData(DataActor):
         return None
 
     @property
-    def date(self) -> datetime | None:
+    def date(self) -> date | None:
         folder = self.date_folder
         if folder is not None:
-            return datetime.fromisoformat(folder.name)
+            return date.fromisoformat(folder.name)
         return None

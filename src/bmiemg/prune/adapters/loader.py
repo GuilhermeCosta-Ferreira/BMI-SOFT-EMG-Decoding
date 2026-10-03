@@ -1,6 +1,7 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+from tqdm import tqdm
 from pathlib import Path
 from dataclasses import dataclass
 from collections import defaultdict
@@ -34,9 +35,11 @@ class Loader:
                     continue
                 files_by_type[file_suffix].append(p)
 
+            files_by_type[".xdf"] = files_by_type[".xdf"][:10]
+
             _print_readable_summary(source_str, files_present)
 
-            for file_suffix, files in files_by_type.items():
+            for file_suffix, files in tqdm(files_by_type.items(), desc="Loading files"):
                 loader = FileLoaderRegistry.get(file_suffix)
                 for file in files:
                     actors.append(loader.load_file(file))
