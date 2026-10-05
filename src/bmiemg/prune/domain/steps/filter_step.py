@@ -8,7 +8,6 @@ from .prune_step import PruneStep
 from ..actors import TrialData, XdfData
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

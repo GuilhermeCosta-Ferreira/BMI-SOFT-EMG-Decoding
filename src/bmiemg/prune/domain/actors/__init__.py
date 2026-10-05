@@ -5,5 +5,11 @@ from .trial_data import TrialData
 from .dataset import Dataset
 from .dataset_partition import DatasetPartition
 
-
-__all__ = ["DataActor", "XdfActor", "XdfData", "TrialData", "Dataset", "DatasetPartition"]
+__all__ = [
+    "DataActor",
+    "XdfActor",
+    "XdfData",
+    "TrialData",
+    "Dataset",
+    "DatasetPartition",
+]

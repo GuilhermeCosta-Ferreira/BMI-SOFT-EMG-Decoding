@@ -84,6 +84,7 @@ def _hide_markers(trial: TrialData) -> TrialData:
     """Blank the markers so the client never sees the test labels."""
     return trial.copy_with(markers=np.zeros_like(trial.markers))
 
+
 def _dominant_movement(markers: NDArray) -> int:
     values = markers[markers != 0]
     movements = values % 100
