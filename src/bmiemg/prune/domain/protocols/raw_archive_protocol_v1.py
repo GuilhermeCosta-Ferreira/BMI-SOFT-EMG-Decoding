@@ -28,7 +28,6 @@ from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
 
-
 # ================================================================
 # 1. Section: Marker maps
 # ================================================================
@@ -114,9 +113,7 @@ class RawArchiveProtocolV1(Protocol):
             ]
         )
         signal_split = SignalSplitSpecs(signal="emg")
-        protocol_definer = ProtocolDefinerSpecs(
-            cuttoff_dates=[date(2025, 11, 21)]
-        )
+        protocol_definer = ProtocolDefinerSpecs(cuttoff_dates=[date(2025, 11, 21)])
         signal_unwarp = SignalUnwarpSpecs()
         analogue_filter = AnalogueFilterSpecs(
             btype="bandpass", cutoff=(20.0, 500.0), order=1

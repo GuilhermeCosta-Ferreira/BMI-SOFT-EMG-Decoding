@@ -11,7 +11,6 @@ from .prune_step import PruneStep
 from .marker_unification_specs import MarkerUnificationSpecs
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -22,7 +21,6 @@ class MarkerUnificationStep(PruneStep[MarkerUnificationSpecs, TrialData, TrialDa
 
     def apply(self, actors: list[TrialData]) -> list[TrialData]:
         return [self._unify_actor(actor) for actor in actors]
-
 
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions

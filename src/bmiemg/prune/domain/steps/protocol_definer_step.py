@@ -9,7 +9,6 @@ from .prune_step import PruneStep
 from .protocol_definer_specs import ProtocolDefinerSpecs
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================

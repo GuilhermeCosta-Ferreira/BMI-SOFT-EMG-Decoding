@@ -10,7 +10,6 @@ from .prune_step import PruneStep
 from .analogue_filter_specs import AnalogueFilterSpecs
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -21,7 +20,6 @@ class AnalogueFilterStep(PruneStep[AnalogueFilterSpecs, TrialData, TrialData]):
 
     def apply(self, actors: list[TrialData]) -> list[TrialData]:
         return [self._filter_actor(actor) for actor in actors]
-
 
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
