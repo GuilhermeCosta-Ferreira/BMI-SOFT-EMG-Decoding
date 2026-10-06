@@ -123,28 +123,18 @@ package "Dataset Pruner" {
         }
 
 
-        abstract class PruneSpecs <<implemented>> {
-            name: ClassVar[str]
-
-        }
-
-
         abstract class PruneStep <<implemented>> {
             + name: ClassVar[str]
-            + config: PruneSpecs
 
             + def apply(actors: list[DataActor]): list[DataActor]
         }
         PruneStep ..> DataActor
-        PruneStep o-- PruneSpecs
         DatasetPruner --> PruneStep
 
 
         abstract class Protocol <<implemented>> {
             + steps: Sequence[PruneStep[Any, Any]]
-            + specs: Sequence[PruneSpecs]
         }
-        Protocol o-- PruneSpecs
         Protocol o-- PruneStep
 
 
@@ -155,7 +145,7 @@ package "Dataset Pruner" {
         ProtocolRegistry ..> Protocol
 
 
-        abstract class XdfActor <<implemented>> {
+        abstract class MetadataActor <<implemented>> {
             + file_header: dict
             + file_name: str
             + file_path: Path
@@ -169,56 +159,32 @@ package "Dataset Pruner" {
             + date_folder: Path
             + date: date
         }
-        DataActor <|-- XdfActor
+        DataActor <|-- MetadataActor
 
 
         class XdfData <<implemented>> {
             + streams: list[dict]
         }
-        XdfActor <|-- XdfData
+        MetadataActor <|-- XdfData
 
 
         class TrialData <<implemented>> {
             + signal: NDArray
             + markers: NDArray
         }
-        XdfActor <|-- TrialData
+        MetadataActor <|-- TrialData
 
 
-        class RemoveSessionStep <<implemented>> {
-        }
-        PruneStep <|-- RemoveSessionStep
-
-
-        class SignalSplitStep <<implemented>> {
-        }
-        PruneStep <|-- SignalSplitStep
-
-
-        class ProtocolDefinerStep <<implemented>> {
-        }
-        PruneStep <|-- ProtocolDefinerStep
-
-
-        class RemoveSessionSpecs <<implemented>> {
-            + name: ClassVar[str] = "remove_sessions"
-            + files_to_remove: list[str]
-        }
-        PruneSpecs <|-- RemoveSessionSpecs
-
-
-        class SignalSplitSpecs <<implemented>> {
-            + name: ClassVar[str] = "signal_split"
-            + signal: Signal
-        }
-        PruneSpecs <|-- SignalSplitSpecs
-
-
-        class ProtocolDefinerSpecs <<implemented>> {
-            + name: ClassVar[str] = "protocol_definer"
-            + cuttoff_dates: list[date]
-        }
-        PruneSpecs <|-- ProtocolDefinerSpecs
+        note as PruneStepsNote
+            Currently implemented steps are:
+            - RemoveSessionStep
+            - SignalSplitStep
+            - ProtocolDefinerStep
+            - AnalogFilterStep
+            - SignalUnwarpStep
+            - MarkerUnificationStep
+        end note
+        PruneStep <|-- PruneStepsNote
     }
 
 
