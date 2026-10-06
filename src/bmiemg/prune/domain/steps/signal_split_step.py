@@ -3,7 +3,7 @@
 # ================================================================
 import copy
 from dataclasses import dataclass, replace
-from typing import Any, ClassVar, Literal, get_args
+from typing import Any, ClassVar, get_args
 
 import numpy as np
 
