@@ -2,6 +2,7 @@
 # 0. Section: IMPORTS
 # ================================================================
 from typing import Any
+from pathlib import Path
 from datetime import date
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -16,6 +17,7 @@ from ..steps import (
     AnalogueFilterStep,
     BuildEpochs,
     TTVSplitStep,
+    SaveDatasetStep,
 )
 from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
@@ -120,5 +122,10 @@ class RawArchiveProtocolV1(Protocol):
                 val_ratio=0.15,
                 test_ratio=0.15,
                 user_balance=True,
+            ),
+            SaveDatasetStep(
+                protocol_name="raw_archive_v1",
+                output_dir=Path("data/pruned/raw_archive_v1"),
+                zip_folders=True,
             ),
         ]
