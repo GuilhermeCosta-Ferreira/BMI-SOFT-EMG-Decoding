@@ -9,21 +9,19 @@ from numpy.typing import NDArray
 
 from ..actors import XdfData, TrialData
 from .prune_step import PruneStep
-from .signal_unwarp_specs import SignalUnwarpSpecs
-
-_MARKERS_TYPE = "markers"
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
+class SignalUnwarpStep(PruneStep[XdfData, TrialData]):
     name: ClassVar[str] = "signal_unwarp"
-    config: SignalUnwarpSpecs
+    background_marker: int = 0
 
     def apply(self, actors: list[XdfData]) -> list[TrialData]:
         return [self._unwarp_actor(actor) for actor in actors]
+
 
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
@@ -48,7 +46,7 @@ class SignalUnwarpStep(PruneStep[SignalUnwarpSpecs, XdfData, TrialData]):
 
     def _build_markers(self, marker_stream: dict, signal_stream: dict) -> NDArray:
         signal_ts = np.asarray(signal_stream["time_stamps"], dtype=float)
-        markers = np.full((1, signal_ts.size), self.config.background_marker, dtype=int)
+        markers = np.full((1, signal_ts.size), self.background_marker, dtype=int)
 
         marker_ts = np.asarray(marker_stream["time_stamps"], dtype=float)
         order = np.argsort(marker_ts)
@@ -72,7 +70,7 @@ def _split_streams(streams: list[dict]) -> tuple[dict, dict]:
     marker_stream: dict | None = None
 
     for stream in streams:
-        if _stream_type(stream) == _MARKERS_TYPE:
+        if _stream_type(stream) == "markers":
             marker_stream = stream
         else:
             signal_stream = stream
@@ -84,7 +82,6 @@ def _split_streams(streams: list[dict]) -> tuple[dict, dict]:
 
     return signal_stream, marker_stream
 
-
 def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     # Raw time_series is (time, channels); the signal matrix is (channels, time).
     signal = np.asarray(signal_stream["time_series"]).T
@@ -93,7 +90,6 @@ def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     channel_names = [str(chan["label"][0]) for chan in channels]
 
     return signal, channel_names
-
 
 def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
     right = int(np.searchsorted(signal_ts, timestamp))
@@ -107,12 +103,10 @@ def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
         return left
     return right
 
-
 def _marker_value(raw: Any) -> int:
     if isinstance(raw, (list, tuple, np.ndarray)):
         raw = raw[0]
     return int(float(str(raw).strip()))
-
 
 def _stream_type(stream: dict) -> str | None:
     value = stream.get("info", {}).get("type")

@@ -7,31 +7,24 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from ..steps import (
-    PruneSpecs,
     PruneStep,
-    RemoveSessionSpecs,
     RemoveSessionStep,
     SignalSplitStep,
-    SignalSplitSpecs,
     ProtocolDefinerStep,
-    ProtocolDefinerSpecs,
-    SignalUnwarpSpecs,
     SignalUnwarpStep,
-    MarkerUnificationSpecs,
     MarkerUnificationStep,
-    AnalogueFilterSpecs,
     AnalogueFilterStep,
-    TTVSplitSpecs,
     TTVSplitStep,
 )
 from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
 from .protocol import Protocol
 from ..protocol_registry import ProtocolRegistry
 
+
+
 # ================================================================
 # 1. Section: Marker maps
 # ================================================================
-# Target structure (XXDD) this protocol unifies its markers into.
 _CANONICAL_MARKER_MAP = CanonicalMarkerMap(
     phases={
         "undefined": 0,
@@ -100,50 +93,30 @@ _MARKER_SOURCE_SCHEMAS: dict[int, SourceMarkerSchema] = {
 @ProtocolRegistry.register("raw_archive_v1")
 @dataclass
 class RawArchiveProtocolV1(Protocol):
-    steps: Sequence[PruneStep[Any, Any, Any]] = field(default_factory=list)
-    specs: Sequence[PruneSpecs] = field(default_factory=list)
+    steps: Sequence[PruneStep[Any, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        remove_sessions = RemoveSessionSpecs(
-            files_to_remove=[
-                "sub-05_ses-04_task-Down_run-01_raw",
-                "sub-P008_ses-S001_task-Default_run-001_emg_kraken",
-                "sub-P008_ses-S002_task-Default_run-001_emg_kraken",
-                "sub-P008_ses-S003_task-Default_run-001_emg_kraken",
-            ]
-        )
-        signal_split = SignalSplitSpecs(signal="emg")
-        protocol_definer = ProtocolDefinerSpecs(cuttoff_dates=[date(2025, 11, 21)])
-        signal_unwarp = SignalUnwarpSpecs()
-        analogue_filter = AnalogueFilterSpecs(
-            btype="bandpass", cutoff=(20.0, 500.0), order=1
-        )
-        marker_unification = MarkerUnificationSpecs(
-            source_schemas=_MARKER_SOURCE_SCHEMAS,
-            target=_CANONICAL_MARKER_MAP,
-        )
-        ttv_split = TTVSplitSpecs(
-            train_ratio=0.7,
-            val_ratio=0.15,
-            test_ratio=0.15,
-            user_balance=True,
-        )
-
-        self.specs = [
-            remove_sessions,
-            signal_split,
-            protocol_definer,
-            signal_unwarp,
-            analogue_filter,
-            marker_unification,
-            ttv_split,
-        ]
         self.steps = [
-            RemoveSessionStep(remove_sessions),
-            SignalSplitStep(signal_split),
-            ProtocolDefinerStep(protocol_definer),
-            SignalUnwarpStep(signal_unwarp),
-            AnalogueFilterStep(analogue_filter),
-            MarkerUnificationStep(marker_unification),
-            TTVSplitStep(ttv_split),
+            RemoveSessionStep(
+                files_to_remove=[
+                    "sub-05_ses-04_task-Down_run-01_raw",
+                    "sub-P008_ses-S001_task-Default_run-001_emg_kraken",
+                    "sub-P008_ses-S002_task-Default_run-001_emg_kraken",
+                    "sub-P008_ses-S003_task-Default_run-001_emg_kraken",
+                ]
+            ),
+            SignalSplitStep(signal="emg"),
+            ProtocolDefinerStep(cuttoff_dates=[date(2025, 11, 21)]),
+            SignalUnwarpStep(),
+            AnalogueFilterStep(btype="bandpass", cutoff=(20.0, 500.0), order=1),
+            MarkerUnificationStep(
+                source_schemas=_MARKER_SOURCE_SCHEMAS,
+                target=_CANONICAL_MARKER_MAP,
+            ),
+            TTVSplitStep(
+                train_ratio=0.7,
+                val_ratio=0.15,
+                test_ratio=0.15,
+                user_balance=True,
+            ),
         ]

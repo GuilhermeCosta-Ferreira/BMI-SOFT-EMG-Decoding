@@ -2,43 +2,50 @@
 # 0. Section: IMPORTS
 # ================================================================
 import copy
-from typing import Any, ClassVar
 from dataclasses import dataclass, replace
+from typing import Any, ClassVar, Literal, get_args
 
 import numpy as np
 
 from ..actors import XdfData
 from .prune_step import PruneStep
-from .signal_split_specs import Signal, SignalSplitSpecs
 
+Signal = Literal["emg", "eeg"]
 _ACCEPTED_TYPES: dict[Signal, set[str]] = {
     "eeg": {"eeg"},
     "emg": {"aux", "emg"},
 }
 
-_MARKERS_TYPE = "markers"
 
 
 # ================================================================
 # 2. Section: Functions
 # ================================================================
 @dataclass
-class SignalSplitStep(PruneStep[SignalSplitSpecs, XdfData, XdfData]):
+class SignalSplitStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "signal_split"
+    signal: Signal
+
+    def __post_init__(self) -> None:
+        if self.signal not in get_args(Signal):
+            raise ValueError(
+                f"signal must be one of {get_args(Signal)}, got {self.signal!r}"
+            )
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:
         return [self._split_actor(actor) for actor in actors]
+
 
     # ──────────────────────────────────────────────────────
     # 2.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
     def _split_actor(self, actor: XdfData) -> XdfData:
-        accepted = _ACCEPTED_TYPES[self.config.signal]
+        accepted = _ACCEPTED_TYPES[self.signal]
 
         kept_streams: list[dict] = []
         for stream in actor.streams:
             # Markers carry the task events and are kept for every signal.
-            if _stream_type(stream) == _MARKERS_TYPE:
+            if _stream_type(stream) == "markers":
                 kept_streams.append(stream)
                 continue
 
@@ -60,7 +67,7 @@ class SignalSplitStep(PruneStep[SignalSplitSpecs, XdfData, XdfData]):
         if not keep_idx:
             return None
 
-        return _select_channels(stream, keep_idx, channels, self.config.signal)
+        return _select_channels(stream, keep_idx, channels, self.signal)
 
 
 # ──────────────────────────────────────────────────────
@@ -80,7 +87,6 @@ def _select_channels(
 
     return new_stream
 
-
 def _channels(stream: dict) -> list[dict] | None:
     desc = stream.get("info", {}).get("desc")
     if not desc or not desc[0]:
@@ -90,14 +96,11 @@ def _channels(stream: dict) -> list[dict] | None:
     except (KeyError, IndexError, TypeError):
         return None
 
-
 def _channel_type(channel: dict) -> str | None:
     return _first_lower(channel.get("type"))
 
-
 def _stream_type(stream: dict) -> str | None:
     return _first_lower(stream.get("info", {}).get("type"))
-
 
 def _first_lower(value: Any) -> str | None:
     if not value:

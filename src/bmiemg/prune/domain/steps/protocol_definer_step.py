@@ -3,22 +3,22 @@
 # ================================================================
 from dataclasses import dataclass
 from typing import ClassVar
+from datetime import date
 
 from ..actors import XdfData
 from .prune_step import PruneStep
-from .protocol_definer_specs import ProtocolDefinerSpecs
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class ProtocolDefinerStep(PruneStep[ProtocolDefinerSpecs, XdfData, XdfData]):
+class ProtocolDefinerStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "protocol_definer"
-    config: ProtocolDefinerSpecs
+    cuttoff_dates: list[date]
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:
-        cutoffs = sorted(self.config.cuttoff_dates)
+        cutoffs = sorted(self.cuttoff_dates)
 
         for actor in actors:
             if actor.date is None:

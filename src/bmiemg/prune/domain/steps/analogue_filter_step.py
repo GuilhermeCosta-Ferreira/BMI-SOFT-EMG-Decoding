@@ -1,22 +1,33 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from typing import ClassVar
 from dataclasses import dataclass
+from typing import ClassVar, Literal
 from scipy.signal import butter, sosfiltfilt
 
 from ..actors import TrialData
 from .prune_step import PruneStep
-from .analogue_filter_specs import AnalogueFilterSpecs
+
+FilterType = Literal["bandpass", "bandstop", "lowpass", "highpass"]
+
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class AnalogueFilterStep(PruneStep[AnalogueFilterSpecs, TrialData, TrialData]):
+class AnalogueFilterStep(PruneStep):
     name: ClassVar[str] = "analogue_filter"
-    config: AnalogueFilterSpecs
+    btype: FilterType
+    cutoff: float | tuple[float, float]
+    order: int = 1
+
+    def __post_init__(self) -> None:
+        pair = isinstance(self.cutoff, tuple)
+        if self.btype in ("bandpass", "bandstop") and not pair:
+            raise ValueError(f"{self.btype} needs a (low, high) cutoff pair")
+        if self.btype in ("lowpass", "highpass") and pair:
+            raise ValueError(f"{self.btype} needs a single cutoff value")
 
     def apply(self, actors: list[TrialData]) -> list[TrialData]:
         return [self._filter_actor(actor) for actor in actors]
@@ -27,12 +38,13 @@ class AnalogueFilterStep(PruneStep[AnalogueFilterSpecs, TrialData, TrialData]):
     def _filter_actor(self, actor: TrialData) -> TrialData:
         cutoff = self._clamp_cutoff(actor.sfreq / 2, actor.file_name)
         sos = butter(
-            self.config.order,
+            self.order,
             cutoff,
-            btype=self.config.btype,
+            btype=self.btype,
             fs=actor.sfreq,
             output="sos",
         )
+
         # Zero-phase filtering keeps the signal aligned with the markers.
         filtered = sosfiltfilt(sos, actor.signal, axis=1)
         return actor.copy_with(signal=filtered)
@@ -46,7 +58,7 @@ class AnalogueFilterStep(PruneStep[AnalogueFilterSpecs, TrialData, TrialData]):
         def clamp(freq: float) -> float:
             return min(max(freq, low), high)
 
-        cutoff = self.config.cutoff
+        cutoff = self.cutoff
         clamped = (
             (clamp(cutoff[0]), clamp(cutoff[1]))
             if isinstance(cutoff, tuple)
