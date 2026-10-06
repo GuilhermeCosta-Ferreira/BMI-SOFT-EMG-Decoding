@@ -3,9 +3,13 @@
 # ================================================================
 from pathlib import Path
 from datetime import date
+from typing import Literal
 from dataclasses import dataclass
 
 from .data_actor import DataActor
+
+Signal = Literal["emg", "eeg"]
+
 
 
 # ================================================================
@@ -18,6 +22,9 @@ class MetadataActor(DataActor):
     file_path: Path
     directory_structure: str = "bids_local"  # assumes the current archive structure
     protocol_version: int = 0  # 0 is undefined
+    signal_type: Signal | None = None
+
+
 
     # ================================================================
     # 2. Section: PROPERTIES

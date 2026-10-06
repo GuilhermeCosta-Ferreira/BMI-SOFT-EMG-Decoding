@@ -7,10 +7,9 @@ from typing import Any, ClassVar, Literal, get_args
 
 import numpy as np
 
-from ..actors import XdfData
+from ..actors import XdfData, Signal
 from .prune_step import PruneStep
 
-Signal = Literal["emg", "eeg"]
 _ACCEPTED_TYPES: dict[Signal, set[str]] = {
     "eeg": {"eeg"},
     "emg": {"aux", "emg"},
@@ -53,7 +52,7 @@ class SignalSplitStep(PruneStep[XdfData, XdfData]):
             if new_stream is not None:
                 kept_streams.append(new_stream)
 
-        return replace(actor, streams=kept_streams)
+        return replace(actor, streams=kept_streams, signal=self.signal)
 
     def _keep_signal(self, stream: dict, accepted: set[str]) -> dict | None:
         channels = _channels(stream)
