@@ -12,7 +12,7 @@ from .data_actor import DataActor
 # 1. Section: Class definition
 # ================================================================
 @dataclass(kw_only=True)
-class XdfActor(DataActor):
+class MetadataActor(DataActor):
     file_header: dict
     file_name: str
     file_path: Path

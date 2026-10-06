@@ -3,12 +3,12 @@
 # ================================================================
 from dataclasses import dataclass
 
-from .xdf_actor import XdfActor
+from .metadata_actor import MetadataActor
 
 
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
 @dataclass(kw_only=True)
-class XdfData(XdfActor):
+class XdfData(MetadataActor):
     streams: list[dict]
