@@ -1,6 +1,7 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+import math
 from typing import ClassVar
 from dataclasses import dataclass
 
@@ -9,23 +10,34 @@ from numpy.typing import NDArray
 
 from ..actors import Dataset, DatasetPartition, TrialData
 from .prune_step import PruneStep
-from .ttv_split_specs import TTVSplitSpecs
+
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
+class TTVSplitStep(PruneStep[TrialData, Dataset]):
     name: ClassVar[str] = "ttv_split"
-    config: TTVSplitSpecs
+    train_ratio: float
+    val_ratio: float
+    test_ratio: float
+    user_balance: bool = False
+    movement_balance: bool = False
+    seed: int = 0
+
+    def __post_init__(self) -> None:
+        total = self.train_ratio + self.val_ratio + self.test_ratio
+        if not math.isclose(total, 1.0):
+            raise ValueError(f"train/val/test ratios must sum to 1.0, got {total}")
 
     def apply(self, actors: list[TrialData]) -> list[Dataset]:
-        rng = np.random.default_rng(self.config.seed)
+        rng = np.random.default_rng(self.seed)
 
         train: list[TrialData] = []
         val: list[TrialData] = []
         test: list[TrialData] = []
+
         # Split each stratum on its own so the requested balances hold.
         for stratum in self._strata(actors).values():
             t, v, s = self._split_stratum(stratum, rng)
@@ -33,8 +45,6 @@ class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
             val += v
             test += s
 
-        # The dev-facing side only sees the test signal; the true test labels
-        # (markers) stay on the server.
         test_unlabelled = [_hide_markers(trial) for trial in test]
         client = [
             DatasetPartition(partition_name="train", trials=train),
@@ -44,6 +54,7 @@ class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
         server = [DatasetPartition(partition_name="test", trials=test)]
 
         return [Dataset(client=client, server=server)]
+
 
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
@@ -56,9 +67,9 @@ class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
 
     def _stratum_key(self, actor: TrialData) -> tuple:
         key: list[object] = []
-        if self.config.user_balance:
+        if self.user_balance:
             key.append(actor.subject_number)
-        if self.config.movement_balance:
+        if self.movement_balance:
             key.append(_dominant_movement(actor.markers))
         return tuple(key)
 
@@ -68,8 +79,8 @@ class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
         shuffled = [actors[i] for i in rng.permutation(len(actors))]
 
         n = len(shuffled)
-        n_train = min(round(n * self.config.train_ratio), n)
-        n_val = min(round(n * self.config.val_ratio), n - n_train)
+        n_train = min(round(n * self.train_ratio), n)
+        n_val = min(round(n * self.val_ratio), n - n_train)
 
         train = shuffled[:n_train]
         val = shuffled[n_train : n_train + n_val]
@@ -81,9 +92,7 @@ class TTVSplitStep(PruneStep[TTVSplitSpecs, TrialData, Dataset]):
 # 1.2 Subsection: Module Helpers
 # ──────────────────────────────────────────────────────
 def _hide_markers(trial: TrialData) -> TrialData:
-    """Blank the markers so the client never sees the test labels."""
     return trial.copy_with(markers=np.zeros_like(trial.markers))
-
 
 def _dominant_movement(markers: NDArray) -> int:
     values = markers[markers != 0]

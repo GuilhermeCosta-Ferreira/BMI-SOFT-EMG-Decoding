@@ -6,18 +6,18 @@ from typing import ClassVar
 
 from ..actors import XdfData
 from .prune_step import PruneStep
-from .remove_session_specs import RemoveSessionSpecs
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
 @dataclass
-class RemoveSessionStep(PruneStep[RemoveSessionSpecs, XdfData, XdfData]):
+class RemoveSessionStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "remove_session"
+    files_to_remove: list[str]
 
     def apply(self, actors: list[XdfData]) -> list[XdfData]:
         filtered_actors = [
-            p for p in actors if p.file_name not in self.config.files_to_remove
+            p for p in actors if p.file_name not in self.files_to_remove
         ]
         return filtered_actors
