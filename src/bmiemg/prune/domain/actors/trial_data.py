@@ -12,7 +12,7 @@ from .metadata_actor import MetadataActor
 # ================================================================
 @dataclass(kw_only=True)
 class TrialData(MetadataActor):
-    signal: NDArray  # shape (channels, time)
+    signal_ch: NDArray  # shape (channels, time)
     markers: NDArray  # shape (1, time)
     channel_names: list[str]
     sfreq: float
