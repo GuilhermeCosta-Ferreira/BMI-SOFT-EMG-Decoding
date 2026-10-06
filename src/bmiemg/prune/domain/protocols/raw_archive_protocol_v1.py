@@ -14,6 +14,7 @@ from ..steps import (
     SignalUnwarpStep,
     MarkerUnificationStep,
     AnalogueFilterStep,
+    BuildEpochs,
     TTVSplitStep,
 )
 from ..steps.marker_schema import CanonicalMarkerMap, SourceMarkerSchema
@@ -113,6 +114,7 @@ class RawArchiveProtocolV1(Protocol):
                 source_schemas=_MARKER_SOURCE_SCHEMAS,
                 target=_CANONICAL_MARKER_MAP,
             ),
+            BuildEpochs(tmin=-0.5, tmax=5.0),
             TTVSplitStep(
                 train_ratio=0.7,
                 val_ratio=0.15,

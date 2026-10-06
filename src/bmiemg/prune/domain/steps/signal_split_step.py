@@ -52,7 +52,7 @@ class SignalSplitStep(PruneStep[XdfData, XdfData]):
             if new_stream is not None:
                 kept_streams.append(new_stream)
 
-        return replace(actor, streams=kept_streams, signal=self.signal)
+        return replace(actor, streams=kept_streams, signal_type=self.signal)
 
     def _keep_signal(self, stream: dict, accepted: set[str]) -> dict | None:
         channels = _channels(stream)

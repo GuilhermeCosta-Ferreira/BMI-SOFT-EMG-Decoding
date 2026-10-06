@@ -46,8 +46,8 @@ class AnalogueFilterStep(PruneStep):
         )
 
         # Zero-phase filtering keeps the signal aligned with the markers.
-        filtered = sosfiltfilt(sos, actor.signal, axis=1)
-        return actor.copy_with(signal=filtered)
+        filtered = sosfiltfilt(sos, actor.signal_ch, axis=1)
+        return actor.copy_with(signal_ch=filtered)
 
     def _clamp_cutoff(
         self, nyquist: float, file_name: str
