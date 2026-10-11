@@ -7,7 +7,7 @@ from pathlib import Path
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from ..adapters import Source, Loader
+from ..adapters import Source, Loader, Exporter
 from ..domain import ProtocolRegistry, PruneStep, DataActor
 
 
@@ -26,8 +26,7 @@ class DatasetPruner:
     def __post_init__(self):
         self._source = Source(data_dir=self._data_dir)
         self._loader = Loader(source=self._source)
-
-
+        self._exporter = Exporter(source=self._source)
 
     # ================================================================
     # 2. Section: MAIN FUNCTIONS
@@ -44,6 +43,9 @@ class DatasetPruner:
 
         return pruned_actors
 
+    def export(self, actors: list[DataActor], protocol_name: str, fmt: str, zip_groups: bool) -> None:
+        self._exporter.export(actors, protocol_name, fmt, zip_groups)
+
     def apply(
         self,
         actors: list[DataActor],
@@ -58,9 +60,7 @@ class DatasetPruner:
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
-    def _load_steps(
-        self, protocol_name: str | None
-    ) -> Sequence[PruneStep[Any, Any]]:
+    def _load_steps(self, protocol_name: str | None) -> Sequence[PruneStep[Any, Any]]:
         if self.custom_steps:
             steps = self.custom_steps
         elif protocol_name is not None:
