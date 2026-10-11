@@ -38,7 +38,6 @@ def plot_dataset_balance(dataset: Dataset) -> None:
     plt.tight_layout()
     plt.show()
 
-
 def _plot_sizes(ax, partitions: dict[str, DatasetPartition]) -> None:
     sizes = [len(partitions[p].trials) for p in _PARTITIONS]
     ax.bar(_PARTITIONS, sizes, color=["C0", "C1", "C2"])
@@ -47,9 +46,7 @@ def _plot_sizes(ax, partitions: dict[str, DatasetPartition]) -> None:
     ax.set_title("partition sizes")
     ax.set_ylabel("samples")
 
-
 def _plot_balance(ax, counts: dict, title: str) -> None:
-    """Stacked bar of a category's distribution across the partitions."""
     categories = sorted({c for part in counts.values() for c in part})
     bottom = np.zeros(len(_PARTITIONS))
     for category in categories:
@@ -62,13 +59,11 @@ def _plot_balance(ax, counts: dict, title: str) -> None:
     ax.set_ylabel("samples")
     ax.legend(fontsize="x-small", ncol=2)
 
-
 def _subject_counts(partitions: dict[str, DatasetPartition]) -> dict:
     return {
         name: Counter(_subject(t) for t in part.trials)
         for name, part in partitions.items()
     }
-
 
 def _movement_counts(partitions: dict[str, DatasetPartition]) -> dict:
     return {
@@ -76,10 +71,8 @@ def _movement_counts(partitions: dict[str, DatasetPartition]) -> dict:
         for name, part in partitions.items()
     }
 
-
 def _subject(trial: TrialData) -> int:
     return -1 if trial.subject_number is None else trial.subject_number
-
 
 def _dominant_movement(markers: np.ndarray) -> int:
     values = markers[markers != 0]
