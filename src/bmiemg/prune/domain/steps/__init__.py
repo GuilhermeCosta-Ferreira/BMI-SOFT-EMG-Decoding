@@ -7,7 +7,6 @@ from .marker_unification_step import MarkerUnificationStep
 from .analogue_filter_step import AnalogueFilterStep
 from .ttv_split_step import TTVSplitStep
 from .build_epochs import BuildEpochs
-from .save_dataset_step import SaveDatasetStep
 
 __all__ = [
     "PruneStep",
@@ -19,5 +18,4 @@ __all__ = [
     "AnalogueFilterStep",
     "TTVSplitStep",
     "BuildEpochs",
-    "SaveDatasetStep",
 ]
