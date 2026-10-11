@@ -19,7 +19,7 @@ class Loader:
     source: Source
 
     def load(self, source_names: list[str]) -> list[DataActor]:
-        known_suffixes = FileLoaderRegistry.known_suffixes()
+        known_suffixes = FileLoaderRegistry.known_keys()
 
         actors: list[DataActor] = []
         for source_str in source_names:
@@ -51,7 +51,7 @@ class Loader:
 # 1.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
 def _print_readable_summary(source_str: str, files_present: list[Path]) -> None:
-    known = FileLoaderRegistry.known_suffixes()
+    known = FileLoaderRegistry.known_keys()
     types = {p.suffix.lower() for p in files_present}
     n_readable = sum(p.suffix.lower() in known for p in files_present)
     pct = 100 * n_readable / len(files_present) if files_present else 0.0
