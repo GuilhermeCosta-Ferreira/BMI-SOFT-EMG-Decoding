@@ -19,5 +19,5 @@ class Source:
     def raw_data_dir(self, dataset_path: Path) -> Path:
         return self.data_dir / dataset_path
 
-    def out_dir(self, dataset_name: str) -> Path:
-        return self.dataset_dir / dataset_name
+    def out_dir(self, protocol_name: str) -> Path:
+        return self.dataset_dir / protocol_name
