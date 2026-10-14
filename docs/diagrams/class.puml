@@ -324,8 +324,6 @@ package "Dataset Pruner" {
 
 
             class WriterRegistry <<implemented>> {
-                + register_for(actor: str, fmt: str): Callable
-                + get_for(actor: str, fmt: str): Writer
             }
             WriterRegistry --|> BaseRegistry
             WriterRegistry ..> Writer
@@ -333,15 +331,9 @@ package "Dataset Pruner" {
 
 
             class DatasetWriter <<implemented>> {
+                + def write(actor: Dataset, dest_dir: Path, ctx: ExportContext): None
             }
             Writer <|.. DatasetWriter
-            DatasetWriter ..> WriterRegistry
-
-
-            class FifWriter <<implemented>> {
-                + suffix: ClassVar[str]
-            }
-            Writer <|.. FifWriter
         }
 
     }
