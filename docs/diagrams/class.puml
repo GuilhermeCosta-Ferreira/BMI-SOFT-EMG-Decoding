@@ -148,14 +148,14 @@ package "Dataset Pruner" {
         DatasetPruner --> PruneStep
 
 
-        class Protocol <<partial>> {
+        class Protocol <<implemented>> {
             + name: str
             + steps: Sequence[PruneStep[Any, Any]]
         }
         Protocol o-- PruneStep
 
 
-        class StepRegistry <<planned>> {
+        class StepRegistry <<implemented>> {
         }
         StepRegistry --|> BaseRegistry
         StepRegistry ..> PruneStep
@@ -226,7 +226,7 @@ package "Dataset Pruner" {
         DatasetPruner --> Loader
 
 
-        class ProtocolLoader <<planned>> {
+        class ProtocolLoader <<implemented>> {
             + config_dir: Path
 
             + load(protocol_name: str): Protocol
