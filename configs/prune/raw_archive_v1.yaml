@@ -1,28 +1,28 @@
 protocol_name: raw_archive_v1
 
 steps:
-  - RemoveSessionStep:
+  - remove_session:
       files_to_remove:
         - sub-05_ses-04_task-Down_run-01_raw
         - sub-P008_ses-S001_task-Default_run-001_emg_kraken
         - sub-P008_ses-S002_task-Default_run-001_emg_kraken
         - sub-P008_ses-S003_task-Default_run-001_emg_kraken
 
-  - SignalSplitStep:
+  - signal_split:
       signal: emg
 
-  - ProtocolDefinerStep:
+  - protocol_definer:
       cuttoff_dates:
         - 2025-11-21
 
-  - SignalUnwarpStep: {}
+  - signal_unwarp: {}
 
-  - AnalogueFilterStep:
+  - analogue_filter:
       btype: bandpass
       cutoff: [20.0, 500.0]
       order: 1
 
-  - MarkerUnificationStep:
+  - marker_unification:
       source_schemas:
         1:
           phase_pos: 0
@@ -87,12 +87,17 @@ steps:
           "rotate wrist left": 4
           "pinch": 5
 
-  - BuildEpochs:
+  - build_epochs:
       tmin: -0.5
       tmax: 5.0
 
-  - TTVSplitStep:
+  - ttv_split:
       train_ratio: 0.7
       val_ratio: 0.15
       test_ratio: 0.15
       user_balance: true
+
+export:
+  - dataset:
+      fmt: .fif
+      zip_groups: true
