@@ -1,10 +1,56 @@
-"""Loading utilities for the EMG-EPN-612 JSON dataset."""
+"""Loading and deployment adaptation utilities for EMG-EPN-612."""
 
+from .adaptation import (
+    BoardAdaptationConfig,
+    BoardAdaptedTrial,
+    adapt_emg_to_board,
+    adapt_trial,
+    board_counts_to_normalized,
+    iter_adapted_split,
+    mimic_board_analog_filter,
+    normalize_signed_adc,
+    quantize_signed_adc,
+    resample_emg,
+)
 from .loader import EMG_CHANNEL_NAMES, EMGTrial, iter_epn612_trials, load_user_trials
+from .split import (
+    MOVEMENTS,
+    SOURCE_GROUPS,
+    SPLIT_NAMES,
+    ParticipantSource,
+    SplitRecord,
+    assign_participant_splits,
+    build_split_records,
+    discover_participants,
+    read_training_trial_metadata,
+    summarize_split,
+    write_split_manifest,
+)
 
 __all__ = [
+    "BoardAdaptationConfig",
+    "BoardAdaptedTrial",
     "EMG_CHANNEL_NAMES",
     "EMGTrial",
+    "MOVEMENTS",
+    "ParticipantSource",
+    "SOURCE_GROUPS",
+    "SPLIT_NAMES",
+    "SplitRecord",
+    "adapt_emg_to_board",
+    "adapt_trial",
+    "assign_participant_splits",
+    "board_counts_to_normalized",
+    "build_split_records",
+    "discover_participants",
+    "iter_adapted_split",
     "iter_epn612_trials",
     "load_user_trials",
+    "mimic_board_analog_filter",
+    "normalize_signed_adc",
+    "quantize_signed_adc",
+    "read_training_trial_metadata",
+    "resample_emg",
+    "summarize_split",
+    "write_split_manifest",
 ]
