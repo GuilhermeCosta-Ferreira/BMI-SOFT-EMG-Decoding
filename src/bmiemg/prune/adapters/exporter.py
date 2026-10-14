@@ -1,12 +1,12 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+from typing import Any
+from pathlib import Path
 from dataclasses import dataclass
-from datetime import UTC, datetime
 
-from .source import Source
+from .exporters import Writer
 from ..domain import DataActor
-from .exporters import ExportContext, WriterRegistry
 
 
 # ================================================================
@@ -14,24 +14,17 @@ from .exporters import ExportContext, WriterRegistry
 # ================================================================
 @dataclass
 class Exporter:
-    source: Source
-
     def export(
         self,
         actors: list[DataActor],
-        protocol_name: str,
-        fmt: str,
-        zip_groups: bool,
+        writers: list[Writer[Any]],
+        dest_dir: Path,
     ) -> None:
-        out_dir = self.source.out_dir(protocol_name)
-        # One timestamp per run so a dataset's files share a suffix.
-        ctx = ExportContext(
-            protocol_name=protocol_name,
-            timestamp=datetime.now(tz=UTC).strftime("%Y-%m-%d_%H-%M-%S"),
-            fmt=fmt,
-            zip_groups=zip_groups,
-        )
-
-        for actor in actors:
-            writer = WriterRegistry.get(actor.name)
-            writer.write(actor, out_dir, ctx)
+        for writer in writers:
+            matching = [actor for actor in actors if actor.name == writer.actor]
+            if not matching:
+                raise ValueError(
+                    f"Writer {writer.name!r} found no {writer.actor!r} actors"
+                )
+            for actor in matching:
+                writer.write(actor, dest_dir)
