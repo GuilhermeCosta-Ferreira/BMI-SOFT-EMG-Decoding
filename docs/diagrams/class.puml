@@ -121,8 +121,7 @@ package "Dataset Pruner" {
             - _source: Source
             - _loader: Loader
             - _exporter: Exporter
-            - _protocol_loader: ProtocolConfigLoader
-            - _protocol_builder: ProtocolBuilder
+            - _protocol_loader: ProtocolLoader
 
             + init(): None
             + run(protocol_name: str | None): list[DataActor]
@@ -149,55 +148,17 @@ package "Dataset Pruner" {
         DatasetPruner --> PruneStep
 
 
-        abstract class Protocol <<implemented>> {
+        class Protocol <<partial>> {
+            + name: str
             + steps: Sequence[PruneStep[Any, Any]]
         }
         Protocol o-- PruneStep
 
 
-        class ProtocolRegistry <<implemented>> {
-        }
-        ProtocolRegistry --|> BaseRegistry
-        ProtocolRegistry ..> Protocol
-
-
-        package "Protocol Handlers"{
-            class StepConfig <<planned>> {
-                + kind: str
-                + params: dict[str, Any]
-            }
-
-
-            class ProtocolConfig <<planned>> {
-                + protocol_name: str
-                + steps: list[StepConfig]
-            }
-            ProtocolConfig o-- StepConfig
-
-
-            class ProtocolBuilder <<planned>> {
-                + build(config: ProtocolConfig): Protocol
-            }
-            ProtocolBuilder ..> ProtocolConfig
-            ProtocolBuilder ..> Protocol
-            DatasetPruner --> ProtocolBuilder
-
-
-            class ConfigProtocol <<planned>> {
-                + name: str
-            }
-            Protocol <|-- ConfigProtocol
-            ProtocolBuilder ..> ConfigProtocol
-        }
-
-
         class StepRegistry <<planned>> {
-            + register(name: str): Callable
-            + get(name: str): type[PruneStep]
-            + known_steps(): set[str]
         }
+        StepRegistry --|> BaseRegistry
         StepRegistry ..> PruneStep
-        ProtocolBuilder ..> StepRegistry
 
 
         abstract class MetadataActor <<implemented>> {
@@ -265,13 +226,14 @@ package "Dataset Pruner" {
         DatasetPruner --> Loader
 
 
-        class ProtocolConfigLoader <<planned>> {
+        class ProtocolLoader <<planned>> {
             + config_dir: Path
 
-            + load(protocol_name: str): ProtocolConfig
+            + load(protocol_name: str): Protocol
         }
-        ProtocolConfigLoader ..> ProtocolConfig
-        DatasetPruner --> ProtocolConfigLoader
+        ProtocolLoader ..> Protocol
+        ProtocolLoader ..> StepRegistry
+        DatasetPruner --> ProtocolLoader
 
 
         package "Loader Sub-Classes"{
