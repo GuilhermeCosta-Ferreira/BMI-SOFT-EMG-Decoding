@@ -2,11 +2,12 @@
 # 0. Section: IMPORTS
 # ================================================================
 from dataclasses import dataclass
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal, Self
 from scipy.signal import butter, sosfiltfilt
 
 from ..actors import TrialData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 FilterType = Literal["bandpass", "bandstop", "lowpass", "highpass"]
 
@@ -15,12 +16,21 @@ FilterType = Literal["bandpass", "bandstop", "lowpass", "highpass"]
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("analogue_filter")
 @dataclass
 class AnalogueFilterStep(PruneStep):
     name: ClassVar[str] = "analogue_filter"
     btype: FilterType
     cutoff: float | tuple[float, float]
     order: int = 1
+
+    @classmethod
+    def from_config(cls, data: dict[str, Any]) -> Self:
+        cutoff = data["cutoff"]
+        # YAML has no tuples; a list cutoff means a (low, high) pair.
+        if isinstance(cutoff, list):
+            data = {**data, "cutoff": tuple(cutoff)}
+        return cls(**data)
 
     def __post_init__(self) -> None:
         pair = isinstance(self.cutoff, tuple)

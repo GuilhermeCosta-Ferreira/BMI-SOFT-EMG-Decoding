@@ -9,11 +9,13 @@ from numpy.typing import NDArray
 
 from ..actors import XdfData, TrialData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("signal_unwarp")
 @dataclass
 class SignalUnwarpStep(PruneStep[XdfData, TrialData]):
     name: ClassVar[str] = "signal_unwarp"
