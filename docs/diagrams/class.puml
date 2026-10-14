@@ -37,9 +37,10 @@ endlegend
 'Utils Package'
 '=============================================================================='
 package "Utils" {
-    class "Registry<T>" as BaseRegistry <<implemented>> {
+    class Registry <<implemented>> {
         + register(key: str): Callable
         + get(key: str): T
+        + get_type(key: str): type[T]
         + known_keys(): set[str]
     }
 }
@@ -77,7 +78,7 @@ package "Download" {
 
             + run(spec: DownloadSpec): None
         }
-        Downloader --> Registry
+        Downloader --> "Download.Model Domain Layer.Registry"
         Downloader ..> DownloadSpec
     }
 
@@ -114,7 +115,7 @@ package "Download" {
 '=============================================================================='
 package "Dataset Pruner" {
     package "Service Layer" #E8F5E9 {
-        class DatasetPruner <<partial>> {
+        class DatasetPruner <<implemented>> {
             + source_name: list[str]
             + custom_steps: list[PruneStep]
 
@@ -123,8 +124,8 @@ package "Dataset Pruner" {
             - _exporter: Exporter
             - _protocol_loader: ProtocolLoader
 
-            + init(): None
             + run(protocol_name: str | None): list[DataActor]
+            + export(actors: list[DataActor], protocol_name: str): None
             + apply(actors, steps): list[DataActor]
         }
     }
@@ -157,7 +158,7 @@ package "Dataset Pruner" {
 
         class StepRegistry <<implemented>> {
         }
-        StepRegistry --|> BaseRegistry
+        StepRegistry --|> Utils.Registry
         StepRegistry ..> PruneStep
 
 
@@ -184,9 +185,11 @@ package "Dataset Pruner" {
         MetadataActor <|-- XdfData
 
 
-        class TrialData <<partial>> {
-            + signal: NDArray
+        class TrialData <<implemented>> {
+            + signal_ch: NDArray
             + markers: NDArray
+            + channel_names: list[str]
+            + sfreq: float
         }
         MetadataActor <|-- TrialData
 
@@ -247,7 +250,7 @@ package "Dataset Pruner" {
             class FileLoaderRegistry <<implemented>> {
 
             }
-            FileLoaderRegistry --|> BaseRegistry
+            FileLoaderRegistry --|> Utils.Registry
             FileLoaderRegistry ..> FileLoader
             Loader --> FileLoaderRegistry
 
@@ -268,7 +271,7 @@ package "Dataset Pruner" {
 
 
         package "Exporter Sub-Classes"{
-            abstract class "Writer<A: DataActor>" as Writer <<partial>> {
+            abstract class Writer <<implemented>> {
                 + name: ClassVar[str]
                 + actor: ClassVar[str]
                 + timestamp: str
@@ -282,7 +285,7 @@ package "Dataset Pruner" {
 
             class WriterRegistry <<implemented>> {
             }
-            WriterRegistry --|> BaseRegistry
+            WriterRegistry --|> Utils.Registry
             WriterRegistry ..> Writer
             ProtocolLoader ..> WriterRegistry
 
