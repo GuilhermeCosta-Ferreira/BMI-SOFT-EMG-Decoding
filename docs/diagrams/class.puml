@@ -251,17 +251,19 @@ package "Dataset Pruner" {
             Loader --> FileLoaderRegistry
 
 
-            class XdfLoader <<implemented>> {
-
-            }
-            FileLoader <|.. XdfLoader
+            note as FileLoadersNote
+                Currently implemented writers are:
+                - XdfLoader
+            end note
+            FileLoader <|-- FileLoadersNote
         }
 
 
-        class Exporter <<implemented>> {
+        class Exporter <<partial>> {
             + source: Source
+            + config_dir: Path
 
-            + export(actors: list[DataActor], protocol_name: str, fmt: str, zip_groups: bool): None
+            + export(actors: list[DataActor], protocol_name: str): None
         }
         Exporter ..> DataActor
         Exporter --> Source
@@ -269,20 +271,15 @@ package "Dataset Pruner" {
 
 
         package "Exporter Sub-Classes"{
-            class ExportContext <<implemented>> {
-                + protocol_name: str
+            abstract class "Writer<A: DataActor>" as Writer <<partial>> {
+                + name: ClassVar[str]
+                + actor: ClassVar[str]
                 + timestamp: str
-                + fmt: str
-                + zip_groups: bool
-            }
-            Exporter ..> ExportContext
 
-
-            abstract class "Writer<A: DataActor>" as Writer <<implemented>> {
-                + def write(actor: A, dest_dir: Path, ctx: ExportContext): None
+                + def write(actor: A, dest_dir: Path): None
+                + def from_config(data: dict, timestamp: str): Writer
             }
             Writer ..> DataActor
-            Writer ..> ExportContext
 
 
             class WriterRegistry <<implemented>> {
@@ -294,7 +291,7 @@ package "Dataset Pruner" {
 
             note as WritersNote
                 Currently implemented writers are:
-                - DatasetWriter
+                - DatasetWriter (fmt, zip_groups)
             end note
             Writer <|-- WritersNote
         }
