@@ -43,7 +43,13 @@ class DatasetPruner:
 
         return pruned_actors
 
-    def export(self, actors: list[DataActor], protocol_name: str, fmt: str, zip_groups: bool) -> None:
+    def export(
+        self,
+        actors: list[DataActor],
+        protocol_name: str,
+        fmt: str = ".fif",
+        zip_groups: bool = True,
+    ) -> None:
         self._exporter.export(actors, protocol_name, fmt, zip_groups)
 
     def apply(
@@ -55,7 +61,6 @@ class DatasetPruner:
             actors = step.apply(actors)
 
         return actors
-
 
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
