@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="1010" viewBox="0 0 980 1010" role="img" aria-labelledby="title desc">
+<title id="title">Final EPN612 experiment file map</title>
+<desc id="desc">Dataset loading, notch and high-pass filtering, windows, features, general importance, reduced trees, plots, and optional cached channel pruning.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#52657a"/></marker></defs>
+<rect width="980" height="1010" fill="#f4f7fb"/>
+<g font-family="Arial,sans-serif" text-anchor="middle">
+<text x="490" y="40" font-size="25" font-weight="bold" fill="#14263d">Final EPN612 experiment</text>
+<rect x="125" y="66" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="99" font-size="20" font-weight="bold" fill="#14263d">1. Dataset ZIP</text>
+<text x="490" y="127" font-size="16" fill="#52657a">existing download_epn612.py or local archive</text>
+<path d="M490,152 V172" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="178" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="211" font-size="20" font-weight="bold" fill="#14263d">2. Read recordings</text>
+<text x="490" y="239" font-size="16" fill="#52657a">src/…/epn612_final/trees_of_trees.py</text>
+<path d="M490,264 V284" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="290" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="323" font-size="20" font-weight="bold" fill="#14263d">3. 50 Hz notch → 20 Hz high-pass</text>
+<text x="490" y="351" font-size="16" fill="#52657a">src/…/epn612_final/preprocessed_features.py</text>
+<path d="M490,376 V396" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="402" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="435" font-size="20" font-weight="bold" fill="#14263d">4. 200 ms windows → 24 × 8 features</text>
+<text x="490" y="463" font-size="16" fill="#52657a">run_preprocessed_windowing.py + canonical utilities</text>
+<path d="M490,488 V508" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="514" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="547" font-size="20" font-weight="bold" fill="#14263d">5. General eight-channel importance</text>
+<text x="490" y="575" font-size="16" fill="#52657a">run_importance_8ch.py · save feature cache</text>
+<path d="M490,600 V620" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="626" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="659" font-size="20" font-weight="bold" fill="#14263d">6. Top-4 / Top-6 gesture trees</text>
+<text x="490" y="687" font-size="16" fill="#52657a">run_importance_top_channels.py · reuse cache</text>
+<path d="M490,712 V732" stroke="#52657a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="125" y="738" width="730" height="86" rx="12" fill="white" stroke="#b8c8d8"/>
+<text x="490" y="771" font-size="20" font-weight="bold" fill="#14263d">7. Importance figures</text>
+<text x="490" y="799" font-size="16" fill="#52657a">shared tree, aggregation and plotting helpers</text>
+<rect x="125" y="865" width="730" height="110" rx="12" fill="#e6f4ef" stroke="#0a8f82"/>
+<text x="490" y="899" font-size="20" font-weight="bold" fill="#14263d">Optional: cached channel sweep and presentation figures</text>
+<text x="490" y="928" font-size="16" fill="#52657a">run_channel_pruning.py · eight → one channel</text>
+<text x="490" y="953" font-size="16" fill="#52657a">make_phase1_figures.py · saved rankings and optional scores</text>
+</g></svg>
