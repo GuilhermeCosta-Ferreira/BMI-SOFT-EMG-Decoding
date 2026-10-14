@@ -4,7 +4,9 @@ This is a pipeline architecture that has the sole purpose of helping process dat
 ---
 
 ## 1. Protocols
-- **RawArchiveProtocolV1** - Used to transform the raw data acquired by the acquisition team into an usable dataset file.
+Each protocol is a YAML file in `configs/prune/<protocol_name>.yaml`. `steps:` lists the steps in run order, keyed by each step's `name` ClassVar (e.g. `protocol_definer`) with its constructor parameters. `export:` lists the writers to run, keyed by the writer's `name`, with their parameters. Steps whose parameters aren't plain YAML types (tuples, nested dataclasses) override `from_config` to convert them.
+
+- **raw_archive_v1** - Used to transform the raw data acquired by the acquisition team into an usable dataset file.
   - RemoveSessionsStep - Remove corrupted or unuanted sessions based ona pre-defined list (kraken and corrupted/incomplete sessions)
   - SignalSplitStep - Split the signal into only EMG channels and Markers
   - ProtocolDefinerStep - Adds a tag to the XDF Data marking which protocol version was used during acquisition

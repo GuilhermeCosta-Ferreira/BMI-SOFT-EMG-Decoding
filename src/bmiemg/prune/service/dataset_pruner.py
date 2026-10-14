@@ -4,11 +4,12 @@
 from tqdm import tqdm
 from typing import Any
 from pathlib import Path
+from datetime import UTC, datetime
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from ..adapters import Source, Loader, Exporter
-from ..domain import ProtocolRegistry, PruneStep, DataActor
+from ..adapters import Source, Loader, Exporter, ProtocolLoader
+from ..domain import PruneStep, DataActor
 
 
 # ================================================================
@@ -21,12 +22,13 @@ class DatasetPruner:
     custom_steps: list[PruneStep] = field(default_factory=list)
 
     _data_dir: Path = Path("data/")
-    _protocol_registry: ProtocolRegistry = field(default_factory=ProtocolRegistry)
+    _config_dir: Path = Path("configs/prune/")
 
     def __post_init__(self):
         self._source = Source(data_dir=self._data_dir)
         self._loader = Loader(source=self._source)
-        self._exporter = Exporter(source=self._source)
+        self._exporter = Exporter()
+        self._protocol_loader = ProtocolLoader(config_dir=self._config_dir)
 
     # ================================================================
     # 2. Section: MAIN FUNCTIONS
@@ -43,14 +45,11 @@ class DatasetPruner:
 
         return pruned_actors
 
-    def export(
-        self,
-        actors: list[DataActor],
-        protocol_name: str,
-        fmt: str = ".fif",
-        zip_groups: bool = True,
-    ) -> None:
-        self._exporter.export(actors, protocol_name, fmt, zip_groups)
+    def export(self, actors: list[DataActor], protocol_name: str) -> None:
+        # One timestamp per run so a dataset's files share a suffix.
+        timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d_%H-%M-%S")
+        writers = self._protocol_loader.load_writers(protocol_name, timestamp)
+        self._exporter.export(actors, writers, self._source.out_dir(protocol_name))
 
     def apply(
         self,
@@ -69,7 +68,7 @@ class DatasetPruner:
         if self.custom_steps:
             steps = self.custom_steps
         elif protocol_name is not None:
-            steps = self._protocol_registry.get(protocol_name).steps
+            steps = self._protocol_loader.load(protocol_name).steps
         else:
             raise ValueError("No protocol name provided and no custom steps defined")
 
