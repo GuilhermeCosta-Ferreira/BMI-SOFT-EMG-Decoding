@@ -28,6 +28,10 @@ class Registry[T]:
 
     @classmethod
     def get(cls, key: str) -> T:
+        return cast(T, cls.get_type(key)())
+
+    @classmethod
+    def get_type(cls, key: str) -> type[T]:
         try:
             target_cls = cls._entries[key]
         except KeyError:
@@ -35,7 +39,7 @@ class Registry[T]:
                 f"Unknown key {key!r} in {cls.__name__}. "
                 f"Registered: {sorted(cls._entries)}"
             ) from None
-        return cast(T, target_cls())
+        return cast(type[T], target_cls)
 
     @classmethod
     def known_keys(cls) -> set[str]:
