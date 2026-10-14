@@ -292,10 +292,13 @@ package "Dataset Pruner" {
             WriterRegistry <-- Exporter
 
 
-            class DatasetWriter <<implemented>> {
-                + def write(actor: Dataset, dest_dir: Path, ctx: ExportContext): None
-            }
-            Writer <|.. DatasetWriter
+            note as WritersNote
+                Currently implemented writers are:
+                - DatasetWriter
+            end note
+            Writer <|-- WritersNote
+        }
+
         }
 
     }
