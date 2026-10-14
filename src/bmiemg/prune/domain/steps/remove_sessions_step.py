@@ -6,11 +6,13 @@ from typing import ClassVar
 
 from ..actors import XdfData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("remove_session")
 @dataclass
 class RemoveSessionStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "remove_session"

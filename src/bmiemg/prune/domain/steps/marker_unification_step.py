@@ -1,13 +1,14 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from typing import ClassVar
+from typing import Any, ClassVar, Self
 from dataclasses import dataclass
 
 import numpy as np
 
 from ..actors import TrialData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 from .marker_schema import (
     CanonicalMarkerMap,
     SourceMarkerSchema,
@@ -17,11 +18,25 @@ from .marker_schema import (
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("marker_unification")
 @dataclass
 class MarkerUnificationStep(PruneStep[TrialData, TrialData]):
     name: ClassVar[str] = "marker_unification"
     source_schemas: dict[int, SourceMarkerSchema]
     target: CanonicalMarkerMap
+
+    @classmethod
+    def from_config(cls, data: dict[str, Any]) -> Self:
+        source_schemas = {
+            int(version): SourceMarkerSchema(
+                **{**schema, "movement_slice": tuple(schema["movement_slice"])}
+            )
+            for version, schema in data["source_schemas"].items()
+        }
+        return cls(
+            source_schemas=source_schemas,
+            target=CanonicalMarkerMap(**data["target"]),
+        )
 
     def apply(self, actors: list[TrialData]) -> list[TrialData]:
         return [self._unify_actor(actor) for actor in actors]

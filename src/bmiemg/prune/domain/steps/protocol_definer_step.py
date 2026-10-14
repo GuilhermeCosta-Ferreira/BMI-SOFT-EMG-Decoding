@@ -7,11 +7,13 @@ from datetime import date
 
 from ..actors import XdfData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("protocol_definer")
 @dataclass
 class ProtocolDefinerStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "protocol_definer"

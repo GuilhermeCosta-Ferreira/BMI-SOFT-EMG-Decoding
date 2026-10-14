@@ -9,6 +9,7 @@ import numpy as np
 
 from ..actors import XdfData, Signal
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 _ACCEPTED_TYPES: dict[Signal, set[str]] = {
     "eeg": {"eeg"},
@@ -20,6 +21,7 @@ _ACCEPTED_TYPES: dict[Signal, set[str]] = {
 # ================================================================
 # 2. Section: Functions
 # ================================================================
+@StepRegistry.register("signal_split")
 @dataclass
 class SignalSplitStep(PruneStep[XdfData, XdfData]):
     name: ClassVar[str] = "signal_split"

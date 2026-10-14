@@ -10,12 +10,14 @@ from numpy.typing import NDArray
 
 from ..actors import Dataset, DatasetPartition, TrialData
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("ttv_split")
 @dataclass
 class TTVSplitStep(PruneStep[TrialData, Dataset]):
     name: ClassVar[str] = "ttv_split"

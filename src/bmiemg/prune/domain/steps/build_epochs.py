@@ -6,12 +6,14 @@ from numpy.typing import NDArray
 from dataclasses import dataclass
 
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 from ..actors import DataActor, Dataset, DatasetPartition, TrialData
 
 
 # ================================================================
 # 1. Section: Functions
 # ================================================================
+@StepRegistry.register("build_epochs")
 @dataclass
 class BuildEpochs(PruneStep[DataActor, DataActor]):
     name: ClassVar[str] = "build_epochs"

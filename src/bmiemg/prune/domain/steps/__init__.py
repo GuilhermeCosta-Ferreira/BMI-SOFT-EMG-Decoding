@@ -1,4 +1,5 @@
 from .prune_step import PruneStep
+from .step_registry import StepRegistry
 from .remove_sessions_step import RemoveSessionStep
 from .signal_split_step import SignalSplitStep
 from .protocol_definer_step import ProtocolDefinerStep
@@ -10,6 +11,7 @@ from .build_epochs import BuildEpochs
 
 __all__ = [
     "PruneStep",
+    "StepRegistry",
     "RemoveSessionStep",
     "SignalSplitStep",
     "ProtocolDefinerStep",
