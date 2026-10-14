@@ -230,6 +230,7 @@ package "Dataset Pruner" {
             + config_dir: Path
 
             + load(protocol_name: str): Protocol
+            + load_writers(protocol_name: str, timestamp: str): list[Writer]
         }
         ProtocolLoader ..> Protocol
         ProtocolLoader ..> StepRegistry
@@ -259,14 +260,10 @@ package "Dataset Pruner" {
         }
 
 
-        class Exporter <<partial>> {
-            + source: Source
-            + config_dir: Path
-
-            + export(actors: list[DataActor], protocol_name: str): None
+        class Exporter <<implemented>> {
+            + export(actors: list[DataActor], writers: list[Writer], dest_dir: Path): None
         }
         Exporter ..> DataActor
-        Exporter --> Source
         DatasetPruner --> Exporter
 
 
@@ -280,13 +277,14 @@ package "Dataset Pruner" {
                 + def from_config(data: dict, timestamp: str): Writer
             }
             Writer ..> DataActor
+            Exporter ..> Writer
 
 
             class WriterRegistry <<implemented>> {
             }
             WriterRegistry --|> BaseRegistry
             WriterRegistry ..> Writer
-            WriterRegistry <-- Exporter
+            ProtocolLoader ..> WriterRegistry
 
 
             note as WritersNote
