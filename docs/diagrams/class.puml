@@ -34,6 +34,18 @@ endlegend
 
 
 '=============================================================================='
+'Utils Package'
+'=============================================================================='
+package "Utils" {
+    class "Registry<T>" as BaseRegistry <<implemented>> {
+        + register(key: str): Callable
+        + get(key: str): T
+        + known_keys(): set[str]
+    }
+}
+
+
+'=============================================================================='
 'Downloader Package'
 '=============================================================================='
 package "Download" {
@@ -52,7 +64,7 @@ package "Download" {
 
 
         class Registry <<implemented>> {
-            + register(source: str, strategy: DownloadStrategy): None
+            + register(source: str): Callable
             + get(source: str): DownloadStrategy
         }
         Registry ..> DownloadStrategy
@@ -104,13 +116,17 @@ package "Dataset Pruner" {
     package "Service Layer" #E8F5E9 {
         class DatasetPruner <<partial>> {
             + source_name: list[str]
+            + custom_steps: list[PruneStep]
 
             - _source: Source
             - _loader: Loader
+            - _exporter: Exporter
+            - _protocol_loader: ProtocolConfigLoader
+            - _protocol_builder: ProtocolBuilder
 
             + init(): None
-            + run(): None
-            + add_step(list[PruneStep]): None
+            + run(protocol_name: str | None): list[DataActor]
+            + apply(actors, steps): list[DataActor]
         }
     }
 
@@ -127,6 +143,7 @@ package "Dataset Pruner" {
             + name: ClassVar[str]
 
             + def apply(actors: list[DataActor]): list[DataActor]
+            + def from_config(data: dict): PruneStep
         }
         PruneStep ..> DataActor
         DatasetPruner --> PruneStep
@@ -139,10 +156,48 @@ package "Dataset Pruner" {
 
 
         class ProtocolRegistry <<implemented>> {
-            + register(name: str, protocol: Protocol): None
-            + get(name: str): Protocol
         }
+        ProtocolRegistry --|> BaseRegistry
         ProtocolRegistry ..> Protocol
+
+
+        package "Protocol Handlers"{
+            class StepConfig <<planned>> {
+                + kind: str
+                + params: dict[str, Any]
+            }
+
+
+            class ProtocolConfig <<planned>> {
+                + protocol_name: str
+                + steps: list[StepConfig]
+            }
+            ProtocolConfig o-- StepConfig
+
+
+            class ProtocolBuilder <<planned>> {
+                + build(config: ProtocolConfig): Protocol
+            }
+            ProtocolBuilder ..> ProtocolConfig
+            ProtocolBuilder ..> Protocol
+            DatasetPruner --> ProtocolBuilder
+
+
+            class ConfigProtocol <<planned>> {
+                + name: str
+            }
+            Protocol <|-- ConfigProtocol
+            ProtocolBuilder ..> ConfigProtocol
+        }
+
+
+        class StepRegistry <<planned>> {
+            + register(name: str): Callable
+            + get(name: str): type[PruneStep]
+            + known_steps(): set[str]
+        }
+        StepRegistry ..> PruneStep
+        ProtocolBuilder ..> StepRegistry
 
 
         abstract class MetadataActor <<implemented>> {
@@ -168,7 +223,7 @@ package "Dataset Pruner" {
         MetadataActor <|-- XdfData
 
 
-        class TrialData <<implemented>> {
+        class TrialData <<partial>> {
             + signal: NDArray
             + markers: NDArray
         }
@@ -183,6 +238,8 @@ package "Dataset Pruner" {
             - AnalogFilterStep
             - SignalUnwarpStep
             - MarkerUnificationStep
+            - BuildEpochs
+            - TTVSplitStep
         end note
         PruneStep <|-- PruneStepsNote
     }
@@ -208,28 +265,85 @@ package "Dataset Pruner" {
         DatasetPruner --> Loader
 
 
-        abstract class FileLoader <<implemented>> {
-            + def load_file(path: Path): list[DataActor]
+        class ProtocolConfigLoader <<planned>> {
+            + config_dir: Path
+
+            + load(protocol_name: str): ProtocolConfig
         }
-        FileLoader ..> DataActor
+        ProtocolConfigLoader ..> ProtocolConfig
+        DatasetPruner --> ProtocolConfigLoader
 
 
-        class FileLoaderRegistry <<implemented>> {
-            + register(suffix: str): Callable
-            + get(suffix: str): FileLoader
-            + known_suffixes(): set[str]
+        package "Loader Sub-Classes"{
+            abstract class FileLoader <<implemented>> {
+                + def load_file(path: Path): list[DataActor]
+            }
+            FileLoader ..> DataActor
+
+
+            class FileLoaderRegistry <<implemented>> {
+
+            }
+            FileLoaderRegistry --|> BaseRegistry
+            FileLoaderRegistry ..> FileLoader
+            Loader --> FileLoaderRegistry
+
+
+            class XdfLoader <<implemented>> {
+
+            }
+            FileLoader <|.. XdfLoader
         }
-        FileLoaderRegistry ..> FileLoader
-        Loader --> FileLoaderRegistry
 
 
-        class XdfLoader <<implemented>> {
+        class Exporter <<implemented>> {
+            + source: Source
 
+            + export(actors: list[DataActor], protocol_name: str, fmt: str, zip_groups: bool): None
         }
-        FileLoader <|.. XdfLoader
+        Exporter ..> DataActor
+        Exporter --> Source
+        DatasetPruner --> Exporter
+
+
+        package "Exporter Sub-Classes"{
+            class ExportContext <<implemented>> {
+                + protocol_name: str
+                + timestamp: str
+                + fmt: str
+                + zip_groups: bool
+            }
+            Exporter ..> ExportContext
+
+
+            abstract class "Writer<A: DataActor>" as Writer <<implemented>> {
+                + def write(actor: A, dest_dir: Path, ctx: ExportContext): None
+            }
+            Writer ..> DataActor
+            Writer ..> ExportContext
+
+
+            class WriterRegistry <<implemented>> {
+                + register_for(actor: str, fmt: str): Callable
+                + get_for(actor: str, fmt: str): Writer
+            }
+            WriterRegistry --|> BaseRegistry
+            WriterRegistry ..> Writer
+            WriterRegistry <-- Exporter
+
+
+            class DatasetWriter <<implemented>> {
+            }
+            Writer <|.. DatasetWriter
+            DatasetWriter ..> WriterRegistry
+
+
+            class FifWriter <<implemented>> {
+                + suffix: ClassVar[str]
+            }
+            Writer <|.. FifWriter
+        }
+
     }
 }
-
-
-
 @enduml
