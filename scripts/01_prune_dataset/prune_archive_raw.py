@@ -17,7 +17,9 @@ SOURCE_NAME: list[str] = [
     "bids",
 ]
 
+PROTOCOL_NAME = "raw_archive_v1"
 _PARTITIONS = ["train", "val", "test"]
+
 
 
 # ================================================================
@@ -26,7 +28,6 @@ _PARTITIONS = ["train", "val", "test"]
 def plot_dataset_balance(dataset: Dataset) -> None:
     client = {p.partition_name: p for p in dataset.client}
     server = {p.partition_name: p for p in dataset.server}
-    # Test markers are blanked on the client, so read them from the server.
     label_source = {**client, "test": server["test"]}
 
     _, axes = plt.subplots(1, 3, figsize=(16, 4))
@@ -92,7 +93,8 @@ if __name__ == "__main__":
         source_name=SOURCE_NAME,
     )
 
-    actors = pruner.run("raw_archive_v1")
+    actors = pruner.run(PROTOCOL_NAME)
+    pruner.export(actors, PROTOCOL_NAME)
 
     if actors and isinstance(actors[0], Dataset):
         plot_dataset_balance(actors[0])
