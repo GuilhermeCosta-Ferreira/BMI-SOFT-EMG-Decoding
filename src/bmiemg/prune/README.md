@@ -1,12 +1,12 @@
 # Prune Dataset
-A pipeline that turns raw recordings into final files that can be used directly for training. Several protocols can live side by side, each producing a different dataset.
+A pipeline that turns raw recordings into final files ready for training. Several protocols can live side by side, each producing a different dataset.
 
 The class diagram is in [`docs/diagrams/class.puml`](../../../docs/diagrams/class.puml) (`make` renders it).
 
 ---
 
 ## 1. Architecture
-The package follows the three-layer split:
+The package follows a three-layer split:
 
 | Layer | Folder | Contents |
 |---|---|---|
@@ -16,7 +16,7 @@ The package follows the three-layer split:
 
 The pipeline is: **load files → actors → steps (in order) → actors → writers → files**.
 
-Every extensible family (`PruneStep`, `FileLoader`, `Writer`) is plugged in through a registry built on `bmiemg.utils.Registry`. A class registers itself with a decorator under a string key, and the YAML/file suffix refers to that key. So adding a new implementation never requires touching the service or the loaders.
+Every extensible family (`PruneStep`, `FileLoader`, `Writer`) is plugged in through a registry built on `bmiemg.utils.Registry`. A class registers itself with a decorator under a string key, and the YAML or file suffix refers to that key. Adding a new implementation never requires touching the service or the loaders.
 
 ### Data actors
 Actors are dataclasses carried between steps. Each step declares which actor types it takes and returns (`PruneStep[InT, OutT]`), so step order matters.
@@ -41,7 +41,7 @@ Each protocol is a YAML file in `configs/prune/<protocol_name>.yaml`:
 Steps whose parameters aren't plain YAML types (tuples, nested dataclasses) override `from_config` to convert them.
 
 ### raw_archive_v1
-Turns the raw data acquired by the acquisition team into a usable train/val/test dataset:
+Turns the raw data from the acquisition team into a usable train/val/test dataset:
 
 `remove_session` → `signal_split` → `protocol_definer` → `signal_unwarp` → `analogue_filter` → `marker_unification` → `build_epochs` → `ttv_split`, exported with `dataset`.
 
@@ -51,12 +51,12 @@ Turns the raw data acquired by the acquisition team into a usable train/val/test
 Every step is a `PruneStep`: it receives a list of `DataActor`s and returns the transformed list. Parameters are the step's own dataclass fields, so the attributes listed below are exactly the YAML keys.
 
 ### RemoveSessionStep - `remove_session` (`XdfData → XdfData`)
-Drops whole recordings, keeping only actors whose `file_name` is not in the removal list. Used to strip corrupted, incomplete and kraken sessions before anything else runs.
+Drops whole recordings, keeping only actors whose `file_name` is not in the removal list. It strips corrupted, incomplete and kraken sessions before anything else runs.
 
 - `files_to_remove: list[str]`: file names, without suffix, to drop.
 
 ### SignalSplitStep - `signal_split` (`XdfData → XdfData`)
-Reduces each recording to one signal modality plus its markers. Marker streams are always kept. For every other stream it keeps only the channels whose type matches (EMG accepts `emg` and `aux`, EEG accepts `eeg`) and rewrites the stream's `time_series`, type and channel metadata. A stream left with no matching channel is dropped. Also sets `signal_type` on the actor.
+Reduces each recording to one signal modality plus its markers. Marker streams are always kept. For every other stream it keeps only the channels whose type matches (EMG accepts `emg` and `aux`, EEG accepts `eeg`) and rewrites the stream's `time_series`, type and channel metadata. A stream left with no matching channel is dropped. It also sets `signal_type` on the actor.
 
 - `signal: "emg" | "eeg"`: target modality. Any other value raises `ValueError`.
 
@@ -71,27 +71,27 @@ Converts the XDF streams (one signal + one marker stream) into a `TrialData`. Th
 - `background_marker: int = 0`: value used before the first marker.
 
 ### AnalogueFilterStep - `analogue_filter` (`TrialData → TrialData`)
-Applies a Butterworth filter emulating the device's analogue front end. Uses zero-phase `sosfiltfilt` so the signal stays aligned with the markers. Cutoffs are clamped below Nyquist.
+Applies a Butterworth filter emulating the device's analogue front end. It uses zero-phase `sosfiltfilt` so the signal stays aligned with the markers. Cutoffs are clamped below Nyquist.
 
 - `btype: "bandpass" | "bandstop" | "lowpass" | "highpass"`
 - `cutoff: float | [low, high]`: a pair is required for band filters, a single value otherwise.
 - `order: int = 1`
 
 ### MarkerUnificationStep - `marker_unification` (`TrialData → TrialData`)
-Rewrites every raw marker code into the canonical `XXDD` code (`XX` = phase, `DD` = movement), so recordings from different protocol versions share one marker vocabulary. The source schema is picked by the actor's `protocol_version`; a missing schema raises `ValueError`. `0` stays background.
+Rewrites every raw marker code into the canonical `XXDD` code (`XX` = phase, `DD` = movement), so recordings from different protocol versions share one marker vocabulary. The actor's `protocol_version` picks the source schema, and a missing schema raises `ValueError`. `0` stays background.
 
 - `source_schemas: dict[int, SourceMarkerSchema]`: per protocol version, how to decode raw codes (`phase_pos`, `movement_slice`, `phase_map`, `movement_groups`, `special_triggers`).
 - `target: CanonicalMarkerMap`: canonical `phases` and `movements` name → number.
 
 ### BuildEpochs - `build_epochs` (`TrialData | Dataset → same`)
-Cuts each trial into one window per movement onset (a run of non-zero `DD`), `[onset + tmin, onset + tmax]` seconds. Windows running past either edge are dropped, like `mne.Epochs`. Works on a `Dataset` too, segmenting every partition.
+Cuts each trial into one window per movement onset (a run of non-zero `DD`), `[onset + tmin, onset + tmax]` seconds. Windows running past either edge are dropped, like `mne.Epochs`. It works on a `Dataset` too, segmenting every partition.
 
 - `tmin: float = -0.5`
 - `tmax: float = 5.0`: must be greater than `tmin`.
 
 ### TTVSplitStep - `ttv_split` (`TrialData → Dataset`)
-Shuffles trials (seeded) into train/val/test, optionally stratified so each subject and/or dominant movement is split by the same ratios. Produces one `Dataset`:
-- `client`: `train`, `val` and `test` - the client test markers are zeroed out.
+Shuffles trials (seeded) into train/val/test, optionally stratified so each subject and/or dominant movement is split by the same ratios. It produces one `Dataset`:
+- `client`: `train`, `val` and `test`. The client test markers are zeroed out.
 - `server`: `test` with its markers, for scoring.
 
 - `train_ratio`, `val_ratio`, `test_ratio: float`: must sum to 1.
@@ -118,7 +118,7 @@ Shuffles trials (seeded) into train/val/test, optionally stratified so each subj
 ---
 
 ## 6. Usage
-Run from the repo root (paths default to `data/` and `configs/prune/`), through Poetry:
+Run from the repo root through Poetry. Paths default to `data/` and `configs/prune/`.
 
 ```python
 from bmiemg.prune import DatasetPruner
@@ -128,13 +128,13 @@ actors = pruner.run("raw_archive_v1")           # load + apply steps
 pruner.export(actors, "raw_archive_v1")         # write files (explicit)
 ```
 
-`run` does not write anything; call `export` when you want files. See [`scripts/01_prune_dataset/prune_archive_raw.py`](../../../scripts/01_prune_dataset/prune_archive_raw.py) for a full example that also plots the split balance:
+`run` doesn't write anything, so call `export` when you want files. [`scripts/01_prune_dataset/prune_archive_raw.py`](../../../scripts/01_prune_dataset/prune_archive_raw.py) is a full example that also plots the split balance:
 
 ```bash
 poetry run python scripts/01_prune_dataset/prune_archive_raw.py
 ```
 
-To try steps without writing a YAML, pass them directly; `custom_steps` takes precedence over the protocol:
+To try steps without writing a YAML, pass them directly. `custom_steps` takes precedence over the protocol:
 
 ```python
 from bmiemg.prune.domain.steps import RemoveSessionStep, SignalSplitStep, SignalUnwarpStep
@@ -148,17 +148,17 @@ trials = pruner.run(None)
 
 You can also run steps on actors you already have with `pruner.apply(actors, steps)`.
 
-To make a new dataset, copy `configs/prune/raw_archive_v1.yaml` to `configs/prune/<new_name>.yaml`, set `protocol_name`, and edit the steps/writers.
+To make a new dataset, copy `configs/prune/raw_archive_v1.yaml` to `configs/prune/<new_name>.yaml`, set `protocol_name`, and edit the steps and writers.
 
 ---
 
 ## 7. Contributing new implementations
-All three extension points work the same way: subclass the interface, register it with a decorator, and import the module in its package `__init__.py`. **The import is required**, registration happens at import time, so a class that is never imported is unknown to the registry (`ValueError: Unknown key ...`).
+All three extension points work the same way: subclass the interface, register it with a decorator, and import the module in its package `__init__.py`. **The import is required.** Registration happens at import time, so a class that is never imported is unknown to the registry (`ValueError: Unknown key ...`).
 
-Registry keys must be unique per registry; a duplicate raises at import. Keep the `name` ClassVar equal to the registry key.
+Registry keys must be unique per registry, and a duplicate raises at import. Keep the `name` ClassVar equal to the registry key.
 
 ### New step (`domain/steps/`)
-Steps belong to the domain layer: no file, network or plotting I/O.
+Steps belong to the domain layer, so no file, network or plotting I/O.
 
 ```python
 # domain/steps/my_step.py
@@ -180,10 +180,10 @@ class MyStep(PruneStep[TrialData, TrialData]):
         return [a.copy_with(signal_ch=a.signal_ch * self.gain) for a in actors]
 ```
 
-1. Declare the input/output actor types in `PruneStep[InT, OutT]`; that fixes where the step can sit in a protocol.
+1. Declare the input/output actor types in `PruneStep[InT, OutT]`. That fixes where the step can sit in a protocol.
 2. Return new actors with `copy_with(...)` rather than mutating inputs.
 3. Validate parameters in `__post_init__` so bad configs fail when the protocol loads.
-4. Override `from_config` only if a parameter can't be built from plain YAML (tuples, nested dataclasses), see `AnalogueFilterStep` and `MarkerUnificationStep`.
+4. Override `from_config` only if a parameter can't be built from plain YAML (tuples, nested dataclasses). See `AnalogueFilterStep` and `MarkerUnificationStep`.
 5. Export it from `domain/steps/__init__.py`, then use `- my_step: {gain: 2.0}` in a protocol.
 6. Document it in section 3 above.
 
@@ -215,8 +215,8 @@ class MyWriter(Writer[Dataset]):
         ...  # use self.timestamp in file names
 ```
 
-`timestamp` is injected by the pruner; the remaining fields come from the YAML `export:` entry. Export it from `adapters/exporters/__init__.py`, then add `- my_writer: {fmt: .npz}` under `export:`.
+The pruner injects `timestamp`, and the remaining fields come from the YAML `export:` entry. Export it from `adapters/exporters/__init__.py`, then add `- my_writer: {fmt: .npz}` under `export:`.
 
 ### Checklist
-- Update `docs/diagrams/class.puml` notes listing the implemented steps/loaders/writers.
+- Update `docs/diagrams/class.puml` notes listing the implemented steps, loaders and writers.
 - Update this README.
