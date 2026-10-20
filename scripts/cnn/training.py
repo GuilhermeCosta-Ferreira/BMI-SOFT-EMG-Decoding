@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import torch
 from torch import nn
@@ -168,6 +170,21 @@ def evaluate(
     """Evaluate an already-trained model without updating it."""
 
     return run_epoch(model, loader, loss_fn, device)
+
+
+def save_checkpoint(
+    model: nn.Module,
+    destination: Path,
+    metadata: dict[str, Any],
+) -> Path:
+    """Save CPU model weights and deployment metadata in one checkpoint."""
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    state_dict = {
+        name: value.detach().cpu() for name, value in model.state_dict().items()
+    }
+    torch.save({**metadata, "state_dict": state_dict}, destination)
+    return destination
 
 
 def run_epoch(

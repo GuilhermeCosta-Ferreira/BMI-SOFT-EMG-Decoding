@@ -34,6 +34,7 @@ if __package__:  # Installed package or ``python -m cnn.train``.
         build_tcnn,
         evaluate,
         fit,
+        save_checkpoint,
     )
 else:  # Direct ``python scripts/cnn/train.py`` execution.
     from training import (
@@ -43,6 +44,7 @@ else:  # Direct ``python scripts/cnn/train.py`` execution.
         build_tcnn,
         evaluate,
         fit,
+        save_checkpoint,
     )
 
 
@@ -58,18 +60,27 @@ class ExperimentConfig:
     training: TrainingConfig
     random_seed: int = 42
     device: str = "auto"
+    model_name: str = "CNNv1"
+    output_directory: Path = REPOSITORY_ROOT / "artifacts/cnn"
 
     def __post_init__(self) -> None:
         if self.random_seed < 0:
             raise ValueError("random_seed cannot be negative")
+        if not self.model_name or not all(
+            character.isalnum() or character in "-_" for character in self.model_name
+        ):
+            raise ValueError(
+                "model_name may contain only letters, numbers, '-' and '_'"
+            )
 
 
 # Edit this single object to define a different experiment. Common settings can
-# also be overridden from the command line; the effective config is always
-# printed before any data is loaded.
+# also be overridden from the command line.
 DEFAULT_CONFIG = ExperimentConfig(
     random_seed=42,
     device="auto",  # "auto", "cpu", "cuda", or "mps"
+    model_name="CNNv1",
+    output_directory=REPOSITORY_ROOT / "artifacts/cnn",
     data=EPN612DatasetConfig(
         root=REPOSITORY_ROOT
         / "data/raw/emg_epn_612/EMG-EPN612 Dataset/EMG-EPN612 Dataset",
@@ -111,10 +122,10 @@ DEFAULT_CONFIG = ExperimentConfig(
 )
 
 
-def run_experiment(config: ExperimentConfig) -> None:
-    """Run the five visible stages of the training pipeline."""
+def run_experiment(config: ExperimentConfig) -> Path:
+    """Train, evaluate, and export one configured experiment."""
 
-    print_experiment(config)
+    # print_experiment(config)
     seed_everything(config.random_seed)
     device = resolve_device(config.device)
     print(f"Device: {device}")
@@ -149,6 +160,34 @@ def run_experiment(config: ExperimentConfig) -> None:
     # 5. One final evaluation on the held-out test split.
     test_metrics = evaluate(model, loaders.test, loss_fn, device)
     print(f"test loss {test_metrics.loss:.3f} acc {test_metrics.accuracy:.2f}")
+
+    # 6. Export CPU weights and everything needed to reconstruct the model.
+    destination = checkpoint_path(config, datasets.participant_count)
+    save_checkpoint(
+        model,
+        destination,
+        {
+            "format_version": 1,
+            "architecture": "TCNN",
+            "model_config": asdict(config.model),
+            "class_labels": datasets.class_labels,
+            "input": {
+                "shape": (
+                    "batch",
+                    config.model.n_channels,
+                    config.data.windows.size_samples,
+                ),
+                "dtype": "float32",
+                "sampling_rate_hz": config.data.adaptation.target_sampling_rate_hz,
+            },
+            "participant_count": datasets.participant_count,
+            "split_sizes": datasets.sizes,
+            "test_metrics": asdict(test_metrics),
+            "experiment_config": _printable(asdict(config)),
+        },
+    )
+    print(f"Model exported: {destination}")
+    return destination
 
 
 def parse_config(argv: list[str] | None = None) -> ExperimentConfig:
@@ -202,6 +241,10 @@ def parse_config(argv: list[str] | None = None) -> ExperimentConfig:
         default=DEFAULT_CONFIG.training.learning_rate,
     )
     parser.add_argument("--device", default=DEFAULT_CONFIG.device)
+    parser.add_argument("--model-name", default=DEFAULT_CONFIG.model_name)
+    parser.add_argument(
+        "--output-dir", type=Path, default=DEFAULT_CONFIG.output_directory
+    )
     parser.add_argument(
         "--seed", type=non_negative_int, default=DEFAULT_CONFIG.random_seed
     )
@@ -232,6 +275,8 @@ def parse_config(argv: list[str] | None = None) -> ExperimentConfig:
         training=training,
         device=args.device,
         random_seed=args.seed,
+        model_name=args.model_name,
+        output_directory=args.output_dir,
     )
 
 
@@ -244,6 +289,7 @@ def print_experiment(config: ExperimentConfig) -> None:
         "batch windows and construct TCNN",
         "train with Adam and cross-entropy",
         "evaluate the held-out test split",
+        "export weights and deployment metadata",
     )
     print("Pipeline:")
     for index, stage in enumerate(stages, start=1):
@@ -271,6 +317,18 @@ def resolve_device(requested: str) -> torch.device:
     if device.type == "mps" and not torch.backends.mps.is_available():
         raise ValueError("MPS was requested but is not available")
     return device
+
+
+def checkpoint_path(config: ExperimentConfig, participant_count: int) -> Path:
+    """Build a descriptive checkpoint path for one experiment."""
+
+    window_ms = 1000 * (
+        config.data.windows.size_samples
+        / config.data.adaptation.target_sampling_rate_hz
+    )
+    duration = f"{window_ms:g}".replace(".", "p")
+    filename = f"{config.model_name}_{participant_count}users_{duration}mswindow.pt"
+    return config.output_directory / filename
 
 
 def positive_int(value: str) -> int:

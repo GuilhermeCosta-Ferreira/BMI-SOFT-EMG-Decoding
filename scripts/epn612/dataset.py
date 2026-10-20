@@ -82,6 +82,7 @@ class DatasetSplits:
     validation: WindowDataset
     test: WindowDataset
     class_labels: tuple[str, ...]
+    participant_count: int
 
     @property
     def sizes(self) -> dict[str, int]:
@@ -141,7 +142,13 @@ def build_epn612_datasets(
             datasets["test"],
         )
 
-    result = DatasetSplits(train, validation, test, config.class_labels)
+    result = DatasetSplits(
+        train,
+        validation,
+        test,
+        config.class_labels,
+        len(selection.participants),
+    )
     empty = [name for name, size in result.sizes.items() if size == 0]
     if empty:
         raise ValueError(

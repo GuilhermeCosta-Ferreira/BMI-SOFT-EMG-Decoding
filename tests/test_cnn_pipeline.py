@@ -13,8 +13,9 @@ from epn612.dataset import (
     extract_trial_windows,
     window_start_indices,
 )
-from cnn.train import parse_config
-from cnn.training import run_epoch
+from cnn.cnn import TCNN
+from cnn.train import checkpoint_path, parse_config
+from cnn.training import run_epoch, save_checkpoint
 
 
 def test_window_starts_are_uniformly_limited():
@@ -67,6 +68,10 @@ def test_cli_overrides_preserve_the_rest_of_the_typed_config():
             "200",
             "--seed",
             "7",
+            "--model-name",
+            "CNNtest",
+            "--output-dir",
+            "models",
         ]
     )
 
@@ -76,7 +81,10 @@ def test_cli_overrides_preserve_the_rest_of_the_typed_config():
     assert config.training.batch_size == 4
     assert config.training.learning_rate == 0.01
     assert config.random_seed == 7
+    assert config.model_name == "CNNtest"
+    assert config.output_directory == Path("models")
     assert config.model.n_filters == (32, 32, 64, 64)
+    assert checkpoint_path(config, 12) == Path("models/CNNtest_12users_100mswindow.pt")
 
 
 def test_epoch_runner_handles_training_and_evaluation():
@@ -100,3 +108,17 @@ def test_epoch_runner_handles_training_and_evaluation():
     assert 0 <= training.accuracy <= 1
     assert evaluation.loss >= 0
     assert 0 <= evaluation.accuracy <= 1
+
+
+def test_checkpoint_contains_reloadable_cpu_weights_and_metadata(tmp_path):
+    model = TCNN(8, 6, n_filters=(2, 2, 2, 2))
+    destination = tmp_path / "CNNv1_5users_200mswindow.pt"
+
+    save_checkpoint(model, destination, {"class_labels": ("rest", "fist")})
+    checkpoint = torch.load(destination, map_location="cpu", weights_only=True)
+
+    assert checkpoint["class_labels"] == ("rest", "fist")
+    assert set(checkpoint["state_dict"]) == set(model.state_dict())
+    assert all(
+        tensor.device.type == "cpu" for tensor in checkpoint["state_dict"].values()
+    )
