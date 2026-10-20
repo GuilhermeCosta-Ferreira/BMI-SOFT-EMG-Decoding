@@ -230,3 +230,4 @@ libML/__pycache__/*
 docs/diagrams/*.png
 /artifacts/
 /playground/
+.claude/

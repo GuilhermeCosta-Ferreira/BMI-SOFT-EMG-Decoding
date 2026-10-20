@@ -46,8 +46,7 @@ poetry run python scripts/cnn/train.py --max-users 20 --epochs 30 \
 
 ### CLI options
 
-`--user` and `--max-users` are mutually exclusive. Defaults match
-`DEFAULT_CONFIG` in `scripts/cnn/train.py`.
+`--user` and `--max-users` are mutually exclusive. Defaults match `DEFAULT_CONFIG` in `scripts/cnn/train.py`.
 
 | Option | Default | Purpose |
 |---|---:|---|
@@ -66,21 +65,15 @@ poetry run python scripts/cnn/train.py --max-users 20 --epochs 30 \
 | `--seed N` | `42` | Set the reproducibility seed |
 | `-h`, `--help` | — | Show the current CLI reference |
 
-Advanced parameters such as split ratios, board adaptation, TCNN filters, and
-Adam settings are edited directly in `DEFAULT_CONFIG`.
+Advanced parameters such as split ratios, board adaptation, TCNN filters, and Adam settings are edited directly in `DEFAULT_CONFIG`.
 
-Every successful run exports a checkpoint to `artifacts/cnn` by default. The
-name records the model version, actual participant count, and window duration:
+Every successful run exports a checkpoint to `artifacts/cnn` by default. The name records the model version, actual participant count, and window duration:
 
 ```text
 artifacts/cnn/CNNv1_10users_200mswindow.pt
 ```
 
-Use `--output-dir PATH` to change the directory. The checkpoint contains CPU
-weights (`state_dict`), model and experiment configuration, class order, input
-shape and sampling rate, split sizes, and final test metrics. It is the source
-artifact for subsequent quantization/conversion to the embedded deployment
-format; it is not directly loadable by a microcontroller.
+Use `--output-dir PATH` to change the directory. The checkpoint contains CPU weights (`state_dict`), model and experiment configuration, class order, input shape and sampling rate, split sizes, and final test metrics. It is the source artifact for subsequent quantization/conversion to the embedded deployment format; it is not directly loadable by a microcontroller.
 
 Run the automated tests with:
 

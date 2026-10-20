@@ -34,6 +34,19 @@ endlegend
 
 
 '=============================================================================='
+'Utils Package'
+'=============================================================================='
+package "Utils" {
+    class Registry <<implemented>> {
+        + register(key: str): Callable
+        + get(key: str): T
+        + get_type(key: str): type[T]
+        + known_keys(): set[str]
+    }
+}
+
+
+'=============================================================================='
 'Downloader Package'
 '=============================================================================='
 package "Download" {
@@ -52,7 +65,7 @@ package "Download" {
 
 
         class Registry <<implemented>> {
-            + register(source: str, strategy: DownloadStrategy): None
+            + register(source: str): Callable
             + get(source: str): DownloadStrategy
         }
         Registry ..> DownloadStrategy
@@ -65,7 +78,7 @@ package "Download" {
 
             + run(spec: DownloadSpec): None
         }
-        Downloader --> Registry
+        Downloader --> "Download.Model Domain Layer.Registry"
         Downloader ..> DownloadSpec
     }
 
@@ -97,4 +110,217 @@ package "Download" {
 }
 
 
+'=============================================================================='
+'Dataset Pruner Package'
+'=============================================================================='
+package "Dataset Pruner" {
+    package "Service Layer" #E8F5E9 {
+        class DatasetPruner <<implemented>> {
+            + source_name: list[str]
+            + custom_steps: list[PruneStep]
+
+            - _data_dir: Path = "data/"
+            - _config_dir: Path = "configs/prune/"
+            - _source: Source
+            - _loader: Loader
+            - _exporter: Exporter
+            - _protocol_loader: ProtocolLoader
+
+            + run(protocol_name: str | None): list[DataActor]
+            + export(actors: list[DataActor], protocol_name: str): None
+            + apply(actors: list[DataActor], steps: Sequence[PruneStep]): list[DataActor]
+        }
+    }
+
+
+    package "Model Domain Layer" #FFF8E1 {
+        package "Actors" {
+            abstract class DataActor <<implemented>> {
+                + name: ClassVar[str]
+
+                + def copy_with(**changes): Self
+            }
+
+
+            abstract class MetadataActor <<implemented>> {
+                + file_header: dict
+                + file_name: str
+                + file_path: Path
+                + directory_structure: str = "bids_local"
+                + protocol_version: int = 0
+                + signal_type: Signal | None = None
+
+                + session_folder: Path | None
+                + session_number: int | None
+                + subject_folder: Path | None
+                + subject_number: int | None
+                + date_folder: Path | None
+                + date: date | None
+            }
+            DataActor <|-- MetadataActor
+
+
+            class XdfData <<implemented>> {
+                + streams: list[dict]
+            }
+            MetadataActor <|-- XdfData
+
+
+            class TrialData <<implemented>> {
+                + signal_ch: NDArray
+                + markers: NDArray
+                + channel_names: list[str]
+                + sfreq: float
+            }
+            MetadataActor <|-- TrialData
+
+
+            class DatasetPartition <<implemented>> {
+                + name = "dataset_partition"
+                + partition_name: "train" | "val" | "test"
+                + trials: list[TrialData]
+
+                + mne_dataset: BaseRaw
+            }
+            DataActor <|-- DatasetPartition
+            DatasetPartition o-- TrialData
+
+
+            class Dataset <<implemented>> {
+                + name = "dataset"
+                + client: list[DatasetPartition]
+                + server: list[DatasetPartition]
+            }
+            DataActor <|-- Dataset
+            Dataset o-- DatasetPartition
+        }
+
+
+        abstract class PruneStep <<implemented>> {
+            + name: ClassVar[str]
+
+            + def from_config(data: dict): PruneStep
+            + def apply(actors: list[DataActor]): list[DataActor]
+        }
+        PruneStep ..> DataActor
+        DatasetPruner --> PruneStep
+
+
+        class StepRegistry <<implemented>> {
+        }
+        StepRegistry --|> Utils.Registry
+        StepRegistry ..> PruneStep
+
+
+        note as PruneStepsNote
+            Currently implemented steps (YAML key):
+            - RemoveSessionStep (remove_session)
+            - SignalSplitStep (signal_split)
+            - ProtocolDefinerStep (protocol_definer)
+            - SignalUnwarpStep (signal_unwarp)
+            - AnalogueFilterStep (analogue_filter)
+            - MarkerUnificationStep (marker_unification)
+            - BuildEpochs (build_epochs)
+            - TTVSplitStep (ttv_split)
+        end note
+        PruneStep <|-left- PruneStepsNote
+
+
+        class Protocol <<implemented>> {
+            + name: str
+            + steps: Sequence[PruneStep[Any, Any]]
+        }
+        Protocol o-- PruneStep
+    }
+
+
+    package "Adapter Layer" #E3F2FD {
+        class Source <<implemented>> {
+            + data_dir: Path
+            + dataset_dir: Path
+
+            + def raw_data_dir(dataset_path: Path): Path
+            + def out_dir(protocol_name: str): Path
+        }
+        Source <-- DatasetPruner
+
+
+        class Loader <<implemented>> {
+            + source: Source
+
+            + load(source_names: list[str]): list[DataActor]
+        }
+        Loader ..> DataActor
+        Loader --> Source
+        DatasetPruner --> Loader
+
+
+        class ProtocolLoader <<implemented>> {
+            + config_dir: Path
+
+            + load(protocol_name: str): Protocol
+            + load_writers(protocol_name: str, timestamp: str): list[Writer]
+        }
+        ProtocolLoader ..> Protocol
+        ProtocolLoader ..> StepRegistry
+        DatasetPruner --> ProtocolLoader
+
+
+        package "Loader Sub-Classes" {
+            abstract class FileLoader <<implemented>> {
+                + def load_file(path: Path): DataActor
+            }
+            FileLoader ..> DataActor
+
+
+            class FileLoaderRegistry <<implemented>> {
+            }
+            FileLoaderRegistry --|> Utils.Registry
+            FileLoaderRegistry ..> FileLoader
+            Loader --> FileLoaderRegistry
+
+
+            note as FileLoadersNote
+                Currently implemented file loaders (suffix):
+                - XdfLoader (.xdf)
+            end note
+            FileLoader <|-- FileLoadersNote
+        }
+
+
+        class Exporter <<implemented>> {
+            + export(actors: list[DataActor], writers: list[Writer], dest_dir: Path): None
+        }
+        Exporter ..> DataActor
+        DatasetPruner --> Exporter
+
+
+        package "Exporter Sub-Classes" {
+            abstract class Writer <<implemented>> {
+                + name: ClassVar[str]
+                + actor: ClassVar[str]
+                + timestamp: str
+
+                + def from_config(data: dict, timestamp: str): Writer
+                + def write(actor: DataActor, dest_dir: Path): None
+            }
+            Writer ..> DataActor
+            Exporter ..> Writer
+
+
+            class WriterRegistry <<implemented>> {
+            }
+            WriterRegistry --|> Utils.Registry
+            WriterRegistry ..> Writer
+            ProtocolLoader ..> WriterRegistry
+
+
+            note as WritersNote
+                Currently implemented writers (YAML key):
+                - DatasetWriter (dataset): fmt, zip_groups
+            end note
+            Writer <|-- WritersNote
+        }
+    }
+}
 @enduml

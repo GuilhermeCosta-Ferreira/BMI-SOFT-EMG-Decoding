@@ -13,7 +13,7 @@ from ...domain import DownloadSpec
 # ================================================================
 @dataclass
 class ArchiveSpecs(DownloadSpec):
-    source: ClassVar[str] = "archive"
+    source: ClassVar[str] = "archive-raw"
 
     url: str
     username: str
