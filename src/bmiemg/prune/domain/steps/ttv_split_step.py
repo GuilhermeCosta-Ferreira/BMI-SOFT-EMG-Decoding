@@ -13,7 +13,6 @@ from .prune_step import PruneStep
 from .step_registry import StepRegistry
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
@@ -57,7 +56,6 @@ class TTVSplitStep(PruneStep[TrialData, Dataset]):
 
         return [Dataset(client=client, server=server)]
 
-
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
@@ -95,6 +93,7 @@ class TTVSplitStep(PruneStep[TrialData, Dataset]):
 # ──────────────────────────────────────────────────────
 def _hide_markers(trial: TrialData) -> TrialData:
     return trial.copy_with(markers=np.zeros_like(trial.markers))
+
 
 def _dominant_movement(markers: NDArray) -> int:
     values = markers[markers != 0]

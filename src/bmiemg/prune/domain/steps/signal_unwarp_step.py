@@ -24,7 +24,6 @@ class SignalUnwarpStep(PruneStep[XdfData, TrialData]):
     def apply(self, actors: list[XdfData]) -> list[TrialData]:
         return [self._unwarp_actor(actor) for actor in actors]
 
-
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
@@ -40,7 +39,7 @@ class SignalUnwarpStep(PruneStep[XdfData, TrialData]):
             file_path=actor.file_path,
             directory_structure=actor.directory_structure,
             protocol_version=actor.protocol_version,
-            signal_type = actor.signal_type,
+            signal_type=actor.signal_type,
             signal_ch=signal,
             channel_names=channel_names,
             markers=markers,
@@ -85,6 +84,7 @@ def _split_streams(streams: list[dict]) -> tuple[dict, dict]:
 
     return signal_stream, marker_stream
 
+
 def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     # Raw time_series is (time, channels); the signal matrix is (channels, time).
     signal = np.asarray(signal_stream["time_series"]).T
@@ -93,6 +93,7 @@ def _build_signal(signal_stream: dict) -> tuple[NDArray, list[str]]:
     channel_names = [str(chan["label"][0]) for chan in channels]
 
     return signal, channel_names
+
 
 def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
     right = int(np.searchsorted(signal_ts, timestamp))
@@ -106,10 +107,12 @@ def _nearest_sample(signal_ts: NDArray, timestamp: float) -> int:
         return left
     return right
 
+
 def _marker_value(raw: Any) -> int:
     if isinstance(raw, (list, tuple, np.ndarray)):
         raw = raw[0]
     return int(float(str(raw).strip()))
+
 
 def _stream_type(stream: dict) -> str | None:
     value = stream.get("info", {}).get("type")

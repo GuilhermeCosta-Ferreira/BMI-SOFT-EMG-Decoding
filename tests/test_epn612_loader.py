@@ -50,9 +50,7 @@ def test_dataset_iterator_supports_hidden_test_labels(tmp_path):
     _write_user(path, testing_label=None)
 
     trial = next(
-        iter_epn612_trials(
-            tmp_path, json_group="testingJSON", section="testingSamples"
-        )
+        iter_epn612_trials(tmp_path, json_group="testingJSON", section="testingSamples")
     )
 
     assert trial.gesture is None

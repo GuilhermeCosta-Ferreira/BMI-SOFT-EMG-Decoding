@@ -11,7 +11,6 @@ from .data_actor import DataActor
 Signal = Literal["emg", "eeg"]
 
 
-
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
@@ -23,8 +22,6 @@ class MetadataActor(DataActor):
     directory_structure: str = "bids_local"  # assumes the current archive structure
     protocol_version: int = 0  # 0 is undefined
     signal_type: Signal | None = None
-
-
 
     # ================================================================
     # 2. Section: PROPERTIES

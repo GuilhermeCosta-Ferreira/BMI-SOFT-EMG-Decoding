@@ -42,7 +42,6 @@ class BuildEpochs(PruneStep[DataActor, DataActor]):
                 )
         return segmented
 
-
     # ──────────────────────────────────────────────────────
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
@@ -53,7 +52,9 @@ class BuildEpochs(PruneStep[DataActor, DataActor]):
         )
 
     def _segment_partition(self, partition: DatasetPartition) -> DatasetPartition:
-        trials = [seg for trial in partition.trials for seg in self._segment_trial(trial)]
+        trials = [
+            seg for trial in partition.trials for seg in self._segment_trial(trial)
+        ]
         return partition.copy_with(trials=trials)
 
     def _segment_trial(self, trial: TrialData) -> list[TrialData]:

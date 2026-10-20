@@ -12,7 +12,6 @@ from .step_registry import StepRegistry
 FilterType = Literal["bandpass", "bandstop", "lowpass", "highpass"]
 
 
-
 # ================================================================
 # 1. Section: Functions
 # ================================================================
