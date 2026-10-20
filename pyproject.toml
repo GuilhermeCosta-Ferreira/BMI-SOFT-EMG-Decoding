@@ -55,3 +55,10 @@ dev = [
     "ruff (>=0.16.9,<0.17.0)",
     "pyright (>=1.1.414,<2.0.0)"
 ]
+
+[tool.pylint.typecheck]
+ignored-modules = ["mne.io"]
+
+[tool.pylint.design]
+min-public-methods = 1
+max-attributes = 10

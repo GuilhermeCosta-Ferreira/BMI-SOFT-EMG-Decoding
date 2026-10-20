@@ -45,7 +45,7 @@ class AnalogueFilterStep(PruneStep):
     # 1.1 Subsection: Helper Functions
     # ──────────────────────────────────────────────────────
     def _filter_actor(self, actor: TrialData) -> TrialData:
-        cutoff = self._clamp_cutoff(actor.sfreq / 2, actor.file_name)
+        cutoff = self._clamp_cutoff(actor.sfreq / 2)
         sos = butter(
             self.order,
             cutoff,
@@ -58,9 +58,7 @@ class AnalogueFilterStep(PruneStep):
         filtered = sosfiltfilt(sos, actor.signal_ch, axis=1)
         return actor.copy_with(signal_ch=filtered)
 
-    def _clamp_cutoff(
-        self, nyquist: float, file_name: str
-    ) -> float | tuple[float, float]:
+    def _clamp_cutoff(self, nyquist: float) -> float | tuple[float, float]:
         low = nyquist * 1e-6
         high = nyquist * (1 - 1e-6)
 
