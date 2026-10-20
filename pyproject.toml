@@ -29,7 +29,11 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "bmiemg", from = "src"}]
+packages = [
+    {include = "bmiemg", from = "src"},
+    {include = "cnn", from = "scripts"},
+    {include = "epn612", from = "scripts"},
+]
 
 [tool.classpy]
 puml = "docs/diagrams/class.puml"

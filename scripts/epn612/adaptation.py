@@ -15,13 +15,14 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.signal import butter, resample_poly, sosfilt
 
-from .loader import EMGTrial, load_user_trials
+if TYPE_CHECKING:
+    from bmiemg.data.epn612.loader import EMGTrial
 
 FloatArray: TypeAlias = NDArray[np.float32]
 IntegerArray: TypeAlias = NDArray[np.signedinteger]
@@ -53,6 +54,8 @@ class BoardAdaptationConfig:
 
     @property
     def resampling_ratio(self) -> tuple[int, int]:
+        """Return the integral polyphase up/down sampling factors."""
+
         ratio = Fraction(
             self.target_sampling_rate_hz / self.source_sampling_rate_hz
         ).limit_denominator(100_000)
@@ -60,6 +63,8 @@ class BoardAdaptationConfig:
 
     @property
     def target_count_limits(self) -> tuple[int, int]:
+        """Return inclusive limits of the target signed ADC representation."""
+
         half_range = 1 << (self.target_adc_bits - 1)
         return -half_range, half_range - 1
 
@@ -208,6 +213,10 @@ def iter_adapted_split(
     config: BoardAdaptationConfig = BoardAdaptationConfig(),
 ) -> Iterator[BoardAdaptedTrial]:
     """Load and adapt manifest trials one participant JSON at a time."""
+
+    # Imported lazily to keep this low-level adaptation module independent from
+    # the public bmiemg.data.epn612 re-export module during package startup.
+    from bmiemg.data.epn612.loader import load_user_trials
 
     manifest = Path(manifest_path)
     selections: dict[tuple[Path, str], set[str]] = defaultdict(set)
