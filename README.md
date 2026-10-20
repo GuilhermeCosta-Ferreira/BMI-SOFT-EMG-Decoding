@@ -44,6 +44,31 @@ poetry run python scripts/cnn/train.py --max-users 20 --epochs 30 \
   --window-step 200 --model-name CNNv2
 ```
 
+### CLI options
+
+`--user` and `--max-users` are mutually exclusive. Defaults match
+`DEFAULT_CONFIG` in `scripts/cnn/train.py`.
+
+| Option | Default | Purpose |
+|---|---:|---|
+| `--dataset-root PATH` | EPN-612 data directory | Override the dataset location |
+| `--user ID` | All participants | Train one participant, e.g. `trainingJSON:user1` |
+| `--max-users N` | All participants | Use the first `N` participants with subject-disjoint splits |
+| `--window-size N` | `400` | Window length in adapted 2 kHz samples |
+| `--window-step N` | `200` | Step between windows in adapted samples |
+| `--max-windows-per-trial N` | `10` | Limit retained windows per trial |
+| `--epochs N` | `10` | Number of training epochs |
+| `--batch-size N` | `32` | Mini-batch size |
+| `--learning-rate X` | `0.001` | Adam learning rate |
+| `--device DEVICE` | `auto` | Use `auto`, `cpu`, `cuda`, or `mps` |
+| `--model-name NAME` | `CNNv1` | Set the exported model name/version |
+| `--output-dir PATH` | `artifacts/cnn` | Set the checkpoint directory |
+| `--seed N` | `42` | Set the reproducibility seed |
+| `-h`, `--help` | — | Show the current CLI reference |
+
+Advanced parameters such as split ratios, board adaptation, TCNN filters, and
+Adam settings are edited directly in `DEFAULT_CONFIG`.
+
 Every successful run exports a checkpoint to `artifacts/cnn` by default. The
 name records the model version, actual participant count, and window duration:
 
