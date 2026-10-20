@@ -1,6 +1,6 @@
 """Loading and deployment adaptation utilities for EMG-EPN-612."""
 
-from .adaptation import (
+from epn612.adaptation import (
     BoardAdaptationConfig,
     BoardAdaptedTrial,
     adapt_emg_to_board,
@@ -13,16 +13,18 @@ from .adaptation import (
     resample_emg,
 )
 from .loader import EMG_CHANNEL_NAMES, EMGTrial, iter_epn612_trials, load_user_trials
-from .split import (
+from epn612.split import (
     MOVEMENTS,
     SOURCE_GROUPS,
     SPLIT_NAMES,
     ParticipantSource,
+    ParticipantSplits,
     SplitRecord,
     assign_participant_splits,
     build_split_records,
     discover_participants,
     read_training_trial_metadata,
+    select_participant_splits,
     summarize_split,
     write_split_manifest,
 )
@@ -34,6 +36,7 @@ __all__ = [
     "EMGTrial",
     "MOVEMENTS",
     "ParticipantSource",
+    "ParticipantSplits",
     "SOURCE_GROUPS",
     "SPLIT_NAMES",
     "SplitRecord",
@@ -51,6 +54,7 @@ __all__ = [
     "quantize_signed_adc",
     "read_training_trial_metadata",
     "resample_emg",
+    "select_participant_splits",
     "summarize_split",
     "write_split_manifest",
 ]

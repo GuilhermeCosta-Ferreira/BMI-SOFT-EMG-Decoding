@@ -34,6 +34,15 @@ class ParticipantSource:
 
 
 @dataclass(frozen=True, slots=True)
+class ParticipantSplits:
+    """Selected participants and the data split assigned to each one."""
+
+    participants: tuple[ParticipantSource, ...]
+    assignments: dict[str, str]
+    split_names: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class SplitRecord:
     participant_id: str
     source_group: str
@@ -73,6 +82,46 @@ def discover_participants(dataset_root: str | Path) -> list[ParticipantSource]:
     if duplicate_ids:
         raise ValueError(f"Found {duplicate_ids} duplicate participant identifiers")
     return participants
+
+
+def select_participant_splits(
+    dataset_root: str | Path,
+    *,
+    participant_id: str | None = None,
+    max_participants: int | None = None,
+    ratios: Mapping[str, float] | None = None,
+    random_seed: int = 42,
+) -> ParticipantSplits:
+    """Select participants and create subject-disjoint split assignments.
+
+    A single selected participant is returned as one ``all`` split. Its windows
+    can then be divided reproducibly after extraction. Cohort runs assign whole
+    participants to train, validation, and test splits.
+    """
+
+    if participant_id is not None and max_participants is not None:
+        raise ValueError("participant_id and max_participants are mutually exclusive")
+    if max_participants is not None and max_participants <= 0:
+        raise ValueError("max_participants must be a positive integer")
+
+    participants = discover_participants(dataset_root)
+    if participant_id is not None:
+        selected = tuple(
+            participant
+            for participant in participants
+            if participant.participant_id == participant_id
+        )
+        if not selected:
+            raise ValueError(f"EPN-612 participant {participant_id!r} was not found")
+        return ParticipantSplits(selected, {participant_id: "all"}, ("all",))
+
+    selected = tuple(participants[:max_participants])
+    assignments = assign_participant_splits(
+        selected,
+        ratios=ratios,
+        random_seed=random_seed,
+    )
+    return ParticipantSplits(selected, assignments, SPLIT_NAMES)
 
 
 def assign_participant_splits(
