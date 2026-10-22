@@ -92,20 +92,19 @@ It covers:
 
 ## 2. Requirements and traceability
 
-> No formal requirements specification exists yet in the repository. The IDs below are **derived** from the project goals stated in `README.md`, `docs/adapt_to_board.md` and the configs, and must be confirmed against the project requirements document (see OI-01).
-
 | Requirement ID | Description (derived) | Verification method | Status |
 |---|---|---|---|
-| REQ-SW-001 | The pipeline shall ingest in-house recordings (XDF → BIDS) and the EPN612 public dataset through a single download/load interface. | D, T | met (downloader + loaders, `tests/test_epn612_loader.py`) |
-| REQ-SW-002 | The decoder shall classify the gesture set {noGesture, fist, waveIn, waveOut, open, pinch}. | T | met on EPN612 |
-| REQ-SW-003 | The decoder shall operate on windows of 200 ms (step 50–100 ms). | I | met (`configs/*.yml`) |
-| REQ-SW-004 | End-to-end latency (acquisition → prediction) shall stay below 200 ms. | A, M | analysed only (`adapt_to_board.md` estimates 25–35 ms); not measured |
-| REQ-SW-005 | The model + features shall fit the STM32WBA65RI (2 MB Flash, 512 KB SRAM, 100 MHz Cortex-M33). | A | analysed; not yet deployed |
-| REQ-SW-006 | Evaluation shall be subject-disjoint (train/val/test split by participant). | I, T | met (`data/epn612/split.py`) |
-| REQ-SW-007 | Training data shall be adapted to the deployment acquisition domain (12-bit ADC, 2000 Hz, 20–500 Hz band). | T | partial (`data/epn612/adaptation.py`, `tests/test_epn612_adaptation.py`) |
-| REQ-SW-008 | Training and online inference shall share one serialisable artefact (features + scaler + model). | T | met (`pipeline/emg_decoder.py`, `tests/test_epn612_decoder.py`) |
-| REQ-SW-009 | Online recognition shall report accuracy, stability (flips/s) and recognition ρ. | T | met offline (`scripts/evaluation/`) |
-| REQ-SW-010 | Experiments shall be reproducible from config files with fixed seeds. | I | met (`random_state: 42`, Hydra/YAML configs) |
+| REQ-SW-001 | The pipeline shall ingest in-house recordings (XDF → BIDS) and the EPN612 public dataset through a single download/load interface. | D | met (downloader subpackage) |
+| REQ-SW-002 | The decoder shall classify the gesture set {noGesture, fist, rotate wriste right, rotate wriste left, open, pinch}. | T | not met |
+| REQ-SW-003 | The decoder should be tested on windows of 25-200 ms | T | not met |
+| REQ-SW-004 | The model + preprocessing shall fit the STM32WBA65RI (2 MB Flash, 512 KB SRAM, 100 MHz Cortex-M33). | A | not met |
+| REQ-SW-005 | The integrated model should infere in less than 200 ms | T | not met |
+| REQ-SW-006 | Evaluation shall be subject-disjoint (train/val/test split by participant). | I, T | met at prune subpackage |
+| REQ-SW-007 | Training data shall be adapted to the deployment acquisition domain (12-bit ADC, 2000 Hz, 20–500 Hz band). | T | partial at prune subpackage|
+| REQ-SW-008 | Online recognition shall report classification metrics, robustness metrics and time metrics. | T | partial met offline (`scripts/evaluation/`) |
+| REQ-SW-009 | Experiments shall be reproducible from config files with fixed seeds. | I | partial |
+| REQ-SW-010 | Only reviewd and refactored code should live in the subpackages, the rest shall live at scripts | D | partial |
+| REQ-SW-011 | The model should outperform in classification and robustness metrics the V1 model | D | not met |
 
 > **Verification methods:** (D)emonstration, (T)est, (M)easurement, (I)nspection, (A)nalysis
 
@@ -113,9 +112,11 @@ It covers:
 
 ## 3. Concept justification
 
-The design aims at a decoder that is (1) accurate enough on a small gesture set, (2) cheap enough to run on an MCU without an accelerator, and (3) trainable today on public data while the in-house dataset grows. Every element below follows from those three constraints.
+The design aims at a decoder that is (1) accurate enough on a small gesture set, (2) cheap enough to run on an low compute chip, and (3) trainable today on public data while the in-house dataset grows. Every element below follows from those three constraints.
 
 ### 3.1 Solution overview
+
+The main concept for the V2 is 
 
 The retained concept is a **classical, windowed feature-based pipeline**: raw EMG is filtered, cut into 200 ms windows, reduced to a fixed vector of time-domain (plus a few spectral) features per channel, standardised, and classified by a lightweight scikit-learn model (linear SVM by default, decision trees for channel/feature importance and MCU-friendly inference). Data comes either from the public EPN612 dataset - adapted to the target board's ADC domain - or from the in-house XDF/BIDS archive, through a layered, registry-based downloader and `mne`-based loaders.
 
