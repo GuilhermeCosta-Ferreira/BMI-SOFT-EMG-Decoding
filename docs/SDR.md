@@ -263,9 +263,9 @@ Score scale :
 | Potential to outperform V1 | 4 | 1 |
 | Data efficiency | 3 | 4 |
 | Development effort | 3 | 5 |
-| Maintainability and community support | 2 | 4 |
+| Maintainability | 2 | 4 |
 | ---|---|---|
-|Total Score| 75 | max score : 105 |
+|Total Score| 70 | max score : 105 |
 
 #### 4.2.2 Alternative B: Remodelled / larger architectures
 
@@ -275,22 +275,38 @@ Score scale :
 
 | Criterion | Weight (1-5) | score (1-5) |
 |---|---|---|
-| Meets performance requirements | 5 | 3 |
-| Embedded feasibility | 3 | 5 |
-| Potential to outperform V1 | 5 | 3 |
-| Data efficiency | 3 | 3 |
-| Development effort | 2 | 3 |
-| Maintainability and community support | 1 | 4 |
+| Meets performance requirements | 5 | 4 |
+| Embedded feasibility | 4 | 1 |
+| Potential to outperform V1 | 4 | 3 |
+| Data efficiency | 3 | 2 |
+| Development effort | 3 | 2 |
+| Maintainability | 2 | 2 |
 | ---|---|---|
-|Total Score| 79 | max score : 105 |
+|Total Score| 52 | max score : 105 |
 
+#### 4.2.3 Retained: Temporal CNN (Atzori et al. 2016) + Wang et al. (2020) reduction
+
+- **Pros:** Simple, EMG-specific, reproducible from the paper; small enough to reduce for the board; first and last layers open to interpretation.
+- **Cons:** Less interpretable than V1; adds PyTorch; baseline performance expected to be modest before preprocessing and fine tuning.
+
+| Criterion | Weight (1-5) | score (1-5) |
+|---|---|---|
+| Meets performance requirements | 5 | 4 |
+| Embedded feasibility | 4 | 4 |
+| Potential to outperform V1 | 4 | 4 |
+| Data efficiency | 3 | 3 |
+| Development effort | 3 | 4 |
+| Maintainability | 2 | 4 |
+| ---|---|---|
+|Total Score| 81 | max score : 105 |
 
 ### 4.3 Trade-off summary
 
 | Option | Score | Retained | Key reason |
 |---|---|---|---|
-| V1 feature-based TreeOfTrees | 75 | No (baseline) | Reference V2 must outperform |
-| Remodelled / larger architectures | 68 | No (science track) | Too heavy for the board this semester |
+| Temporal CNN + Wang reduction | 81 | Yes | Simple, reducible, interpretable filters, room to upgrade |
+| V1 feature-based TreeOfTrees | 70 | No (baseline) | Reference V2 must outperform |
+| Remodelled / larger architectures | 52 | No (science track) | Too heavy for the board and too early for our first deep model |
 
 ## 5. Quality management and compliance
 
