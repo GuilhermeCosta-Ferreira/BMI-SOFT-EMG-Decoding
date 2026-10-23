@@ -87,6 +87,11 @@ It covers:
 | SVM | Support Vector Machine (linear, `LinearSVC`) |
 | DT / RF | Decision tree / Random forest |
 | CNN | Convolutional neural network |
+| TCNN | Temporal CNN, the V2 model based on Atzori et al. (2016) |
+| TTV | Train / Test / Validation split |
+| ICA | Independent Component Analysis |
+| κ (kappa) | Cohen's kappa score, agreement corrected for chance |
+| MAKE Archive | In-house storage for recordings and trained models |
 | OvA | One-versus-all classification |
 | MCU | Microcontroller unit (target: STM32WBA65RI) |
 
@@ -110,114 +115,105 @@ It covers:
 
 ---
 
+
 ## 3. Concept justification
 
-The design aims at a decoder that is (1) accurate enough on a small gesture set, (2) cheap enough to run on an low compute chip, and (3) trainable today on public data while the in-house dataset grows. Every element below follows from those three constraints.
+The design aims at a decoder that is (1) accurate enough on a small gesture set, (2) cheap enough to run on a low-compute chip, and (3) trainable today on public data while the in-house dataset grows. Every element below follows from those three constraints.
 
 ### 3.1 Solution overview
 
-The main concept for the V2 is 
+The main concept for V2 is to replace the V1 hand-crafted feature + classical classifier pipeline with an **end-to-end Temporal CNN (TCNN)** based on Atzori et al. (2016), trained on the **EMG-EPN-612 open-source dataset adapted to the deployment board's acquisition domain**. The model is first evaluated as a raw baseline (150 ms windows, no software preprocessing), then improved through a controlled preprocessing study, and finally **reduced for the embedded target** following the Wang et al. (2020) pipeline (sampling rate, window size, channel silencing, quantisation). In parallel, a **science track** studies the learned CNN filters to understand and later improve the architecture.
 
-The retained concept is a **classical, windowed feature-based pipeline**: raw EMG is filtered, cut into 200 ms windows, reduced to a fixed vector of time-domain (plus a few spectral) features per channel, standardised, and classified by a lightweight scikit-learn model (linear SVM by default, decision trees for channel/feature importance and MCU-friendly inference). Data comes either from the public EPN612 dataset - adapted to the target board's ADC domain - or from the in-house XDF/BIDS archive, through a layered, registry-based downloader and `mne`-based loaders.
+ ![figure](v2_diagram.png)
 
-```mermaid
-flowchart LR
-    subgraph Sources
-        A1[In-house XDF<br/>LSL recordings] --> A2[convert: XDF → BIDS]
-        A3[EPN612 Zenodo ZIP]
-    end
-    D[Downloader<br/>service / domain / adapters] --> A2
-    D --> A3
-    A2 --> L[Loaders<br/>BIDSLoader / EPN612 loader]
-    A3 --> L
-    L --> AD[Board adaptation<br/>12-bit, 2 kHz, 20–500 Hz]
-    AD --> S[Subject-disjoint split<br/>train / val / test]
-    S --> P[Preprocessing<br/>notch 50 Hz, high-pass 20 Hz]
-    P --> W[Windowing<br/>200 ms, 50–100 ms step]
-    W --> F[Feature extraction<br/>24 features × 8 ch]
-    F --> M[Model<br/>SVM / DT / OvA trees]
-    M --> E[Evaluation<br/>offline + recognition metrics]
-    M --> X[(Serialised decoder<br/>joblib artefact)]
-    X --> O[Online inference<br/>predict_one]
-```
-
-*Figure 3.1: High-level architecture of the EMG decoding pipeline.*
+*Figure 3.1: High-level architecture of the EMG decoding pipeline V2.*
 
 ### 3.2 Main design choices
 
-#### 3.2.1 Feature-based classical ML over end-to-end deep learning
+#### 3.2.1 Temporal CNN (Atzori et al. 2016) as the V2 model
 
-- **Decision:** Hand-crafted per-channel features (`preprocessing/features`, 24 types) fed to scikit-learn models via `ModelFactory` subclasses (`SVMFactory`, `DecisionTreeFactory`, `LogisticRegressionFactory`).
-- **Rationale:** Time-domain features are O(n) and dominate the embedded compute budget; literature (Paper 1 in `adapt_to_board.md`) shows >94 % accuracy with such features on an 8-ch / 6-gesture setup. Small models train in seconds and are directly portable to C (micromlgen / emlearn).
-- **Requirements addressed:** REQ-SW-002, REQ-SW-004, REQ-SW-005
-- **Consequences / limitations:** Performance is bounded by feature quality; cross-subject generalisation may be lower than deep models. A CNN (`scripts/cnn/`) is kept as a benchmark (see §4).
+- **Decision:** Implement in PyTorch the five-block CNN of Atzori et al. (2016) (`scripts/cnn/cnn.py`): a first convolution spanning all electrodes, 3×3 and 5×5 convolutions with average pooling, a temporal convolution (5×1 or 9×1) and a 1×1 classification convolution averaged over time.
+- **Rationale:** It is a simple, well-documented EMG architecture, a good starting point to compare against V1, and its small size makes later embedded reduction realistic. Learning features directly from the signal removes the hand-crafted feature step that dominated V1 compute.
+- **Requirements addressed:** REQ-SW-002, REQ-SW-011
+- **Consequences / limitations:** Adds PyTorch to the environment (version constraints to be reported, see OI-02). Needs more data than V1 and is less interpretable, which motivates the science track (3.2.6). Success criterion for this step is code-level: it runs without crashing on every team machine.
 
-#### 3.2.2 Linear SVM as the default decoder, trees for importance and pruning
+#### 3.2.2 Dataset adaptation to the deployment domain
 
-- **Decision:** `EMGSVMDecoder` (StandardScaler + `LinearSVC`, `class_weight="balanced"`) is the reference decoder; decision trees (one gesture-vs-all tree per gesture) are used to rank channels and features and to evaluate Top-4/Top-6 channel subsets.
-- **Rationale:** Linear SVM is a small weight matrix (classes × features), trivially exported to an MCU; trees give interpretable importances used to cut channel count and feature cost.
-- **Requirements addressed:** REQ-SW-002, REQ-SW-005, REQ-SW-008
-- **Consequences / limitations:** Channel ranking in `epn612_final` is learned on both labelled fields, so pruning scores are descriptive, not an independent test (see OI-04).
-
-#### 3.2.3 Board-domain adaptation of public data
-
-- **Decision:** EPN612 (8-bit, 200 Hz Myo) is lazily converted to the deployment domain (centred signed 12-bit, 2000 Hz via `resample_poly`, 1st-order 20–500 Hz band-pass).
-- **Rationale:** Allows training now on 612 users while the target board's own recordings are scarce, and makes features numerically comparable to the board.
+- **Decision:** For V2 only the open-source EPN612 dataset is used for training. Its signals are adapted to look like what the model will see once deployed: amplitude scaling and signal resolution (8-bit Myo → 12-bit board ADC range), sampling frequency (200 Hz → board rate by resampling) and the analogue front-end (simulated first-order 20–500 Hz filter). Implemented in `src/bmiemg/data/epn612/adaptation.py`.
+- **Rationale:** In-house data is still scarce and lacks the correct number of channels; training on adapted public data lets the model learn on 612 users while staying in the same numeric domain as the board.
 - **Requirements addressed:** REQ-SW-007
-- **Consequences / limitations:** No information above the 100 Hz source Nyquist can be recovered; the adaptation does not recover physical volts. Real board data is still needed for validation.
+- **Consequences / limitations:** Information above the 100 Hz source Nyquist cannot be recovered by upsampling, so the adapted data is only an approximation of board data. Its similarity to local recordings must be quantified (signal similarity per task, electrode maps). We can use the incomplete but supersampled in-house data has a way to study this consequence.
 
-#### 3.2.4 Subject-disjoint, movement-balanced splits
+#### 3.2.3 Train/Test/Val split 70/15/15 balanced by user and movement
 
-- **Decision:** Train/val/test splits are made by participant and balanced per movement (`data/epn612/split.py`).
-- **Rationale:** A prosthesis must generalise to its wearer; within-subject splits overestimate accuracy.
-- **Requirements addressed:** REQ-SW-006
-- **Consequences / limitations:** Lower reported scores than window-level random splits; per-user calibration may be needed later.
+- **Decision:** One TTV split of 70 % / 15 % / 15 %, disjoint by participant and balanced per movement (at `bmiemg/prune`). The deliverable is the split file itself.
+- **Rationale:** A prosthesis must generalise to unseen users; within-subject splits overestimate accuracy. A fixed, versioned split makes all later steps comparable.
+- **Requirements addressed:** REQ-SW-006, REQ-SW-009
+- **Consequences / limitations:** With smaller subsets we might end up having incompete splits or false balanced situations.
 
-#### 3.2.5 Layered, registry-based data acquisition
+#### 3.2.4 Raw baseline at a locked 150 ms window
 
-- **Decision:** `src/bmiemg/download` split into `service` (Downloader), I/O-free `domain` (specs, strategies, registry) and per-source `adapters` (archive, EPN612). In-house data is converted XDF → BIDS and read with `mne-bids`.
-- **Rationale:** New sources are added by writing an adapter only; BIDS gives a standard, tool-supported layout.
-- **Requirements addressed:** REQ-SW-001
-- **Consequences / limitations:** Extra abstraction for few sources today.
+- **Decision:** Before any preprocessing or tuning, train and evaluate the TCNN on 150 ms windows, reporting accuracy, Cohen's kappa and F1 score. Trained models are saved to the MAKE Archive and their paths recorded; training curves and model size are reported alongside.
+- **Rationale:** Establishes raw model capacity. 150 ms is not yet a realistic deployment window, but fixing it isolates the effect of the model from the effect of window length.
+- **Requirements addressed:** REQ-SW-003, REQ-SW-008, REQ-SW-011
+- **Consequences / limitations:** Performance is expected to be modest at this stage; it is the reference for every later step.
 
-#### 3.2.6 Shared train/inference artefact
+#### 3.2.5 Preprocessing study (filtering)
 
-- **Decision:** One dataclass (`EMGSVMDecoder`) holds the processing config, fitted scaler and model, and offers `fit`, `predict` and a streaming `predict_one`; saved with joblib.
-- **Rationale:** Prevents train/serve skew in feature extraction.
-- **Requirements addressed:** REQ-SW-008
-- **Consequences / limitations:** Python-only artefact; MCU export is a separate step.
+- **Decision:** Quantify the effect of software preprocessing on the locked 150 ms movement-prediction task. A 50 Hz notch is tested first and kept only if it improves accuracy (EMG also has energy in that band). Other filtering parameters are then explored by grid search.
+- **Rationale:** Each preprocessing step costs compute on the MCU, so it must earn its place through a measured accuracy gain and reduced inference time.
+- **Requirements addressed:** REQ-SW-004, REQ-SW-008
+- **Consequences / limitations:** Grid search multiplies training runs; results are tied to the adapted dataset and must be re-checked on board data. 
 
-#### 3.2.7 Operating modes
+#### 3.2.6 Model reduction for the embedded target (Wang et al. 2020)
 
-| Mode / Stage | Purpose | Entry condition | Exit condition | Active components |
+- **Decision:** Port the model to the board this semester by applying the Wang et al. (2020) reduction pipeline step by step, measuring the impact of each step on performance:
+  1. reduce the sampling rate where possible,
+  2. reduce the window size: grid search over 50, 75, 100, 150, 175 and 200 ms,
+  3. silence the least important channels,
+  4. quantise the weights.
+  A robustness score summarising performance across realistic window sizes is defined for this evaluation.
+- **Rationale:** Larger windows are expected to perform better, but real-time prosthesis control needs short windows; the trade-off must be measured. The pipeline is proven for EEGNet on low-power MCUs (more demanding task).
+- **Requirements addressed:** REQ-SW-003, REQ-SW-004, REQ-SW-005
+- **Consequences / limitations:** Each reduction may lose accuracy; deployment itself is owned by the firmware repository.
+
+#### 3.2.7 Science track: CNN interpretability
+
+- **Decision:** In parallel with integration, analyse the learned CNN weights, starting from the first and last layers (expected to be the most interpretable, by analogy with vision CNNs), form hypotheses on their role and verify them with ablation studies. Architecture changes inspired by work such as Liao et al. (2025) are also explored.
+- **Rationale:** Understanding what the model learned guides better architectures and makes the decoder easier to trust and transfer between terms.
+- **Requirements addressed:** REQ-SW-011
+- **Consequences / limitations:** Experimental, with no guaranteed outcome. Requires a structured documentation base and a literature database to carry the knowledge across team turnovers. Close to the end of the semester, we might fail to complete it.
+
+#### 3.2.8 Workflow stages
+
+| Mode / Stage | Purpose | Entry condition | Exit condition | Documentation deliverables |
 |---|---|---|---|---|
-| Data acquisition | Fetch and convert raw data | `DownloadSpecs` built and `Downloader.run()` called | Raw data under `data/raw/` validated | Downloader, adapters, XDF→BIDS converter |
-| Offline training | Fit decoder on a split | Config (`configs/*.yml`) and data available | Model, metrics, confusion matrix saved under `results/` | Loaders, adaptation, preprocessing, features, `Trainer`, model factories |
-| Analysis / pruning | Rank channels and features, sweep subsets | Cached feature run directory exists | Importance CSVs and figures produced | `scripts/epn612_final/*`, `postprocessing/importance_pruning.py` |
-| Offline recognition evaluation | Replay recordings as a stream and score | Trained model + labelled XDF | Report (accuracy, flips/s, ρ) | `scripts/evaluation/recog_eval_*` |
-| Online inference | Predict per incoming window | Loaded decoder, buffer filled with one window | Stream stops | `EMGSVMDecoder.predict_one` |
-| Safe / fault state | Reject bad inputs | Wrong window shape, sampling rate or < 2 classes | Exception raised to caller | Validation in decoder and loaders |
+| 2.1 TCNN implementation | Reproduce Atzori et al. (2016) in PyTorch | PyTorch added to the environment | Runs without crashing on dummy data, on all team computers | Python and package version constraints |
+| 2.2 Dataset adaptation | Bring EPN612 into the board domain and build the TTV split | EPN612 downloaded (`scripts/download/download_epn612.py`) | Adapted data and 70/15/15 split file exist | Dataset composition per partition and overall size; signal similarity open-source vs local per task; electrode maps |
+| 2.3 Training and evaluation | Raw baseline at 150 ms | Split file and working TCNN | Baseline accuracy, kappa, F1 reported | Models saved at MAKE Archive (paths); metric plots, training curves, model size |
+| 2.4 Preprocessing | Measure the effect of the notch and the filter grid | Baseline available | Retained preprocessing chain chosen | Same as 2.3, plus ICA maps and source analysis |
+| 2.5 Optimisation | Reduce the model for the board | Retained preprocessing chain | Reduced model meets REQ-SW-004/005 | Same as 2.3 for each reduction step; window-size grid and robustness score |
+| 2.6 Science | Interpret the CNN filters and test architecture changes | Trained TCNN available (runs in parallel with 2.5) | Hypotheses confirmed or rejected by ablation | Structured docs base and literature database |
 
 ### 3.3 Functionally linked systems
 
-- **BMI acquisition hardware / STM32WBA65RI board** - source of live EMG; defines ADC resolution, sampling rate and analog band (20–500 Hz).
-- **Embedded firmware** - will host the exported model (`docs/adapt_to_board.md`).
-- **LSL / XDF recording setup** and the in-house **BIDS archive** - source of labelled in-house sessions (triggers mapped to codes via `data/epoch/TriggerMap.py`).
-- **EMG-EPN-612 dataset (Zenodo)** - public training data.
-- **Prosthetic arm controller** - downstream consumer of gesture labels (planned).
-- **EEG decoding** - planned parallel modality, not covered here.
+- **In-House EMG Acquisition Hardware**: source of live EMG; defines ADC resolution, sampling rate and the analogue 20–500 Hz first-order filter that the dataset adaptation mimics.
+- **Embedded firmware** ([BMI-EMG-Firmware](https://github.com/N-Pulse/BMI-EMG-Firmware/tree/i2c_adc)): will host the reduced model from step 2.5 and its peripherics.
+- **MAKE Archive**: storage for trained models and the in-house recordings used for the signal similarity comparison.
+- **EMG-EPN-612 dataset (Zenodo)**: training data for V2.
+- **V1 decoder** (feature-based TreeOfTrees): the baseline V2 must outperform (REQ-SW-011).
+- **EEG decoding** ([BMI-SOFT-EEG-Decoding](https://github.com/N-Pulse/BMI-SOFT-EEG-Decoding)): parallel modality; may reuse the TCNN and the reduction pipeline. May be used down the line with EMG and some sort of statde machine.
 
 ### 3.4 Performance budgets and design margins
 
 | Budget | Target | Current estimate / value | Source |
 |---|---|---|---|
-| End-to-end latency | < 200 ms | 200 ms window + ~20–25 ms features + ~5–10 ms inference on 100 MHz M33 | `adapt_to_board.md` §4.3 (analysis) |
-| Flash | ≤ 2048 KB | RF(100 trees) ~530 KB; linear SVM ≪ 100 KB (6 × 192 weights) | `adapt_to_board.md` §4.1 |
-| SRAM | ≤ 512 KB | Window buffer 8 ch × 400 samples (2 kHz) ≈ 6.4 KB at int16 | derived |
-| Input dimensionality | minimise | 24 features × 8 ch = 192; Top-4/Top-6 channel subsets evaluated | `scripts/epn612_final` |
-| Compute | real-time at 100 MHz | Prefer O(n) time-domain features; spectral features (FFT) to be pruned | `adapt_to_board.md` |
+| Inference latency | < 200 ms (REQ-SW-005) | Not measured | Step 2.5 |
+| Window size | Realistic window (25–200 ms tested) | Locked at 150 ms until step 2.5; grid 50–200 ms | V2 plan |
+| Flash | ≤ 2048 KB | Not measured; reduced by channel silencing and quantisation | STM32WBA65RI |
+| SRAM | ≤ 512 KB | Input buffer 8 ch × 300 samples (150 ms at 2 kHz) ≈ 4.8 KB at int16; activations TBD | derived |
 
-> Margins are analytical only; on-device measurement is pending (OI-03).
+> Budgets will be filled with measured values at step 2.5 (OI-05).
 
 ---
 
@@ -226,23 +222,22 @@ flowchart LR
 ### 4.1 Trade-off method
 
 The trade-off method used was based on the following criteria :
-- Meets performance requirements (accuracy on subject-disjoint gesture classification)
-- Embedded feasibility (memory, compute, latency on STM32WBA65RI)
-- Data efficiency (works with limited in-house labelled data)
-- Interpretability and debuggability
+- Meets performance requirements (accuracy, kappa, F1 on the subject-disjoint split)
+- Embedded feasibility (memory, compute, latency on STM32WBA65RI after reduction)
+- Potential to outperform V1 and to be improved (REQ-SW-011, science track)
+- Data efficiency (works with adapted public data)
 - Development effort and tooling maturity
-- Maintainability and community support
+- Maintainability
 
-Weights reflect a proof of concept that must ultimately run on an MCU.
 
 | Criterion | Weight (1 - 5) | Rationale for weight |
 |---|---|---|
 | Meets performance requirements | 5 | The decoder must reliably separate the 6 gestures across subjects. |
-| Embedded feasibility | 5 | Final target is a 100 MHz MCU with no accelerator; a model that cannot be deployed is a dead end. |
-| Data efficiency | 4 | In-house labelled data is scarce; public data is from a different device. |
-| Interpretability | 3 | Needed to choose channels/features and to debug acquisition issues. |
+| Embedded feasibility | 4 | The model must run on the board this semester, but the reduction pipeline gives room to shrink it. |
+| Potential to outperform V1 | 4 | V2 exists to beat V1 and to open a research path. |
+| Data efficiency | 3 | EPN612 provides 612 users, so data is less of a constraint than in V1. |
 | Development effort | 3 | Student team with limited time per semester. |
-| Maintainability and community support | 2 | Useful for handover between cohorts, not critical at PoC stage. |
+| Maintainability | 2 | Useful for handover between terms, not critical at PoC stage. |
 
 Score scale :
 > [1] : Does not meet any requirements
@@ -251,85 +246,51 @@ Score scale :
 > [4] : Meets all minimum requirements and 'should'
 > [5] : Meets all requirements, 'Shall, should & may'
 
-> Scores below are the author's qualitative assessment at PoC stage; quantitative comparison on the same split is pending (OI-05). Max score = 5 × (5+5+4+3+3+2) = 110.
+> Scores are qualitative at this stage and will be updated with measured results from steps 2.3–2.5 (OI-06). Max score = 5 × (5+4+4+3+3+2) = 105.
 
 ### 4.2 Traded-off design choices
 
-#### 4.2.1 Alternative A - End-to-end CNN on raw windows
+#### 4.2.1 Alternative A: V1 feature-based TreeOfTrees
 
-- **Description:** Five-block CNN (Atzori et al. 2016) treating each window as a (time × electrodes) image (`scripts/cnn/cnn.py`, `train.py`).
-- **Pros:** Learns features automatically; strong results in literature with enough data; no feature engineering.
-- **Cons:** Needs large labelled datasets; heavier compute/memory, requires STM32Cube.AI and quantisation; harder to interpret; PyTorch dependency outside the main package.
-
-| Criterion | Weight (1-5) | score (1-5) |
-|---|---|---|
-| Meets performance requirements | 5 | 4 |
-| Embedded feasibility | 5 | 2 |
-| Data efficiency | 4 | 2 |
-| Interpretability | 3 | 1 |
-| Development effort | 3 | 3 |
-| Maintainability and community support | 2 | 4 |
-| ---|---|---|
-|Total Score| 65 | max score : 110 |
-
-#### 4.2.2 Alternative B - Random Forest (100 trees)
-
-- **Description:** Ensemble of decision trees on the same features (previous default in `configs/train.yml`, recommended in `adapt_to_board.md`).
-- **Pros:** Non-linear, robust, built-in importances, proven MCU ports (micromlgen).
-- **Cons:** ~530 KB Flash; inference cost grows with trees; larger artefact than linear model.
-
-| Criterion | Weight (1-5) | score (1-5) |
-|---|---|---|
-| Meets performance requirements | 5 | 4 |
-| Embedded feasibility | 5 | 4 |
-| Data efficiency | 4 | 4 |
-| Interpretability | 3 | 3 |
-| Development effort | 3 | 4 |
-| Maintainability and community support | 2 | 4 |
-| ---|---|---|
-|Total Score| 83 | max score : 110 |
-
-#### 4.2.3 Alternative C - Per-DoF regression / classification (8 DoF models)
-
-- **Description:** One model per degree of freedom (wrist flex/ext, pro/sup, thumb, fingers) as in `configs/train.yml` `dof_list`.
-- **Pros:** Enables proportional, multi-DoF control.
-- **Cons:** Needs DoF-level labels not yet produced by the label pipeline (TODO in config); 8× the models; no public dataset with matching labels.
-
-| Criterion | Weight (1-5) | score (1-5) |
-|---|---|---|
-| Meets performance requirements | 5 | 2 |
-| Embedded feasibility | 5 | 3 |
-| Data efficiency | 4 | 1 |
-| Interpretability | 3 | 3 |
-| Development effort | 3 | 2 |
-| Maintainability and community support | 2 | 3 |
-| ---|---|---|
-|Total Score| 50 | max score : 110 |
-
-#### 4.2.4 Retained - Feature-based linear SVM (+ OvA trees for channel/feature selection)
-
-- **Pros:** Smallest model footprint; fast to train and evaluate; shared artefact for online use; trees give channel/feature pruning to cut compute.
-- **Cons:** Linear boundary may limit accuracy on hard gestures (waveIn/waveOut); still relies on 192 features before pruning.
+- **Description:** Hand-crafted time and frequency features (24 types × 8 channels) fed to a binary decision tree that differentiates between movement 1 and not movement 1. If it decodes not movement 1 then it would go to the movement 2 binary tree and so on.
+- **Pros:** Small, fast to train, interpretable, already implemented and levereged easy to decode movements.
+- **Cons:** Performance capped by feature quality; feature extraction dominates MCU compute; little room for research improvement. Default DT and SVM kept as the V1 baseline to beat.
 
 | Criterion | Weight (1-5) | score (1-5) |
 |---|---|---|
 | Meets performance requirements | 5 | 3 |
-| Embedded feasibility | 5 | 5 |
-| Data efficiency | 4 | 4 |
-| Interpretability | 3 | 4 |
-| Development effort | 3 | 4 |
+| Embedded feasibility | 4 | 4 |
+| Potential to outperform V1 | 4 | 1 |
+| Data efficiency | 3 | 4 |
+| Development effort | 3 | 5 |
 | Maintainability and community support | 2 | 4 |
 | ---|---|---|
-|Total Score| 87 | max score : 110 |
+|Total Score| 75 | max score : 105 |
+
+#### 4.2.2 Alternative B: Remodelled / larger architectures
+
+- **Description:** More complex CNN or architectures that worked with attention were discussed
+- **Pros:** Closer to what SOTA is going for, with chances of increased in classification metrics
+- **Cons:** V2 is our first deep learning model, going for a complex architecture would lock us with a copy from literature that we wouldnt have the intuiton to upgrade. It would be harder to make sure it would fit on the lower compute. Not just that, but training compute and data availability could be an issue. CNN allows for easier training with an intuitive architecture and chnaces of filter intepretability.
+
+| Criterion | Weight (1-5) | score (1-5) |
+|---|---|---|
+| Meets performance requirements | 5 | 3 |
+| Embedded feasibility | 3 | 5 |
+| Potential to outperform V1 | 5 | 3 |
+| Data efficiency | 3 | 3 |
+| Development effort | 2 | 3 |
+| Maintainability and community support | 1 | 4 |
+| ---|---|---|
+|Total Score| 79 | max score : 105 |
+
 
 ### 4.3 Trade-off summary
 
 | Option | Score | Retained | Key reason |
 |---|---|---|---|
-| Feature-based linear SVM + OvA trees | 87 | Yes | Best embedded fit, interpretable, data-efficient |
-| Random Forest (100 trees) | 83 | Fallback | Similar accuracy, larger footprint; kept as first upgrade path |
-| End-to-end CNN | 65 | No (benchmark) | Data-hungry and costly on MCU |
-| Per-DoF models | 50 | No (future) | Labels not available yet |
+| V1 feature-based TreeOfTrees | 75 | No (baseline) | Reference V2 must outperform |
+| Remodelled / larger architectures | 68 | No (science track) | Too heavy for the board this semester |
 
 ## 5. Quality management and compliance
 
@@ -401,32 +362,29 @@ Current status: research-use only (RUO) proof of concept; no clinical use. Good-
 
 -->
 
+
 ## 7. Open issues and future work
 
 | ID | Issue / TBD / TBC | Owner | Due | Impact if unresolved |
 |---|---|---|---|---|
-| OI-01 | No formal requirements document; REQ IDs in §2 are derived and must be confirmed | BMI-SOFT lead | TBD | Traceability cannot be signed off |
-| OI-02 | Validate the decoder on real recordings from the target board (domain gap vs adapted EPN612) | BMI-SOFT / HW | TBD | Reported accuracy may not transfer to the device |
-| OI-03 | Export model to C and measure latency, Flash and RAM on STM32WBA65RI | Embedded team | TBD | REQ-SW-004/005 remain analysis-only |
-| OI-04 | Channel/feature ranking uses both labelled fields; redo selection on train only and test on held-out users | BMI-SOFT | TBD | Optimistic pruning results |
-| OI-05 | Benchmark SVM, RF and CNN on the same subject-disjoint split and update §4 scores | BMI-SOFT | TBD | Trade-off scores remain qualitative |
-| OI-06 | Produce DoF-level labels for in-house data (`configs/train.yml` TODO) | BMI-SOFT | TBD | Multi-DoF control blocked |
-| OI-07 | Declare pandas/joblib/torch as direct dependencies; fix `pyproject.toml` author placeholder | BMI-SOFT | TBD | Fragile environment setup |
-| OI-08 | Two preprocessing modules coexist (`libML/preprocessing.py`, `preprocessing_new.py`) with `src/bmiemg/preprocessing` | BMI-SOFT | TBD | Divergent feature definitions |
-| OI-09 | Choose software/data licence and fill §5–§6 | Project management | TBD | Cannot publish or share openly |
+| OI-04 | Quantify signal similarity between adapted EPN612 and local recordings; produce electrode maps | EMG team | TBD | Domain gap unknown |
+| OI-05 | Measure latency, Flash and RAM of the reduced model on STM32WBA65RI | EMG team / Firmware | TBD | REQ-SW-004/005 unverified |
+| OI-06 | Update chapter 4 scores with measured accuracy, kappa and F1 | EMG team | TBD | Trade-off stays qualitative |
+| OI-07 | Define the window-size robustness score used in step 2.5 | EMG team | TBD | Window choice not justified |
+| OI-08 | Set up the structured docs base and literature database for the science track | EMG team | TBD | Findings lost between terms |
 
 ---
 
 ## 8. References
 
-1. Applicable documents: project requirements specification `<TBD>`; [`docs/adapt_to_board.md`](adapt_to_board.md); [`docs/diagrams/class.puml`](diagrams/class.puml), [`docs/diagrams/activity.puml`](diagrams/activity.puml); [`scripts/epn612_final/README.md`](../scripts/epn612_final/README.md); [`src/bmiemg/download/README.md`](../src/bmiemg/download/README.md).
+1. Applicable documents: project requirements specification `<TBD>`; [`docs/adapt_to_board.md`](adapt_to_board.md); [`docs/diagrams/class.puml`](diagrams/class.puml); [`src/bmiemg/download/README.md`](../src/bmiemg/download/README.md).
 2. Reference documents:
+   - Atzori, M., Cognolato, M., & Müller, H. (2016). Deep learning with convolutional neural networks applied to electromyography data: A resource for the classification of movements for prosthetic hands. *Frontiers in Neurorobotics*, 10. https://doi.org/10.3389/fnbot.2016.00009
+   - Wang, X., Hersche, M., Tömekce, B., Kaya, B., Magno, M., & Benini, L. (2020). An accurate EEGNet-based motor-imagery brain-computer interface for low-power edge computing. arXiv:2004.00077. https://doi.org/10.1109/MeMeA49120.2020.9137134
+   - Liao et al. (2025). `<full reference TBD>`
    - Benalcázar M. et al., *EMG-EPN-612 dataset*, Zenodo.
-   - Atzori M. et al. (2016), *Deep learning with convolutional neural networks applied to electromyography data*, Frontiers in Neurorobotics.
-   - *On the Deployment of Edge AI Models for Surface Electromyography-Based Hand Gesture Recognition* (Paper 1 in `adapt_to_board.md`).
-   - *Microcontroller Implementation of LSTM Neural Networks for Dynamic Hand Gesture Recognition* (Paper 2 in `adapt_to_board.md`).
    - STMicroelectronics, NUCLEO-WBA65RI / STM32WBA65RI datasheet.
-   - BIDS specification; `mne` / `mne-bids` documentation.
+   - PyTorch documentation.
 
 ---
 
@@ -434,20 +392,4 @@ Current status: research-use only (RUO) proof of concept; no clinical use. Good-
 
 ### Appendix A: Bill of materials
 
-Software-only subsystem: no hardware BOM. Software dependencies are pinned in [`pyproject.toml`](../pyproject.toml) and [`poetry.lock`](../poetry.lock) (Python 3.12; numpy, scipy, scikit-learn, polars, mne, mne-bids, pyxdf, hydra-core, matplotlib/seaborn; dev: black, pylint, pytest, pre-commit).
-
-### Appendix B: Repository map
-
-| Path | Role |
-|---|---|
-| `src/bmiemg/download/` | Layered downloader (service / domain / adapters) |
-| `src/bmiemg/data/` | XDF→BIDS conversion, epoching, BIDS and EPN612 loaders, adaptation, splits |
-| `src/bmiemg/preprocessing/` | Filters, segmentation, envelope, feature extraction |
-| `src/bmiemg/models/` | Model factories, target builders, trainer, evaluator, registry |
-| `src/bmiemg/pipeline/emg_decoder.py` | Shared training / online-inference artefact |
-| `src/bmiemg/postprocessing/` | Importance-based pruning |
-| `scripts/epn612_final/` | Final EPN612 importance and channel-pruning experiment |
-| `scripts/evaluation/` | Offline recognition evaluation (accuracy, flips/s, ρ) |
-| `scripts/cnn/` | CNN benchmark |
-| `configs/` | Training / evaluation configurations |
-| `tests/` | pytest suite for EPN612 loader, adaptation, preprocessing, training, decoder |
+Software-only subsystem: no hardware BOM. Dependencies are pinned in [`pyproject.toml`](../pyproject.toml) and [`poetry.lock`](../poetry.lock) (Python 3.12).
