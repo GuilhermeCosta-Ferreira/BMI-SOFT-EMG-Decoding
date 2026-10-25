@@ -100,15 +100,15 @@ It covers:
 | Requirement ID | Description (derived) | Verification method | Status |
 |---|---|---|---|
 | REQ-SW-001 | The pipeline shall ingest in-house recordings (XDF → BIDS) and the EPN612 public dataset through a single download/load interface. | D | met (downloader subpackage) |
-| REQ-SW-002 | The decoder shall classify the gesture set {noGesture, fist, rotate wriste right, rotate wriste left, open, pinch}. | T | not met |
+| REQ-SW-002 | The decoder shall classify the gesture set {noGesture, fist, rotate wrist right, rotate wrist left, open, pinch}. | T | not met |
 | REQ-SW-003 | The decoder should be tested on windows of 25-200 ms | T | not met |
 | REQ-SW-004 | The model + preprocessing shall fit the STM32WBA65RI (2 MB Flash, 512 KB SRAM, 100 MHz Cortex-M33). | A | not met |
 | REQ-SW-005 | The integrated model should infere in less than 200 ms | T | not met |
 | REQ-SW-006 | Evaluation shall be subject-disjoint (train/val/test split by participant). | I, T | met at prune subpackage |
-| REQ-SW-007 | Training data shall be adapted to the deployment acquisition domain (12-bit ADC, 2000 Hz, 20–500 Hz band). | T | partial at prune subpackage|
+| REQ-SW-007 | Training data shall be adapted to the deployment acquisition domain (16-bit ADC, 2000 Hz, 20–500 Hz band). | T | partial at prune subpackage|
 | REQ-SW-008 | Online recognition shall report classification metrics, robustness metrics and time metrics. | T | partial met offline (`scripts/evaluation/`) |
 | REQ-SW-009 | Experiments shall be reproducible from config files with fixed seeds. | I | partial |
-| REQ-SW-010 | Only reviewd and refactored code should live in the subpackages, the rest shall live at scripts | D | partial |
+| REQ-SW-010 | Only reviewed and refactored code should live in the subpackages, the rest shall live at scripts | D | partial |
 | REQ-SW-011 | The model should outperform in classification and robustness metrics the V1 model | D | not met |
 
 > **Verification methods:** (D)emonstration, (T)est, (M)easurement, (I)nspection, (A)nalysis
@@ -139,10 +139,10 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 
 #### 3.2.2 Dataset adaptation to the deployment domain
 
-- **Decision:** For V2 only the open-source EPN612 dataset is used for training. Its signals are adapted to look like what the model will see once deployed: amplitude scaling and signal resolution (8-bit Myo → 12-bit board ADC range), sampling frequency (200 Hz → board rate by resampling) and the analogue front-end (simulated first-order 20–500 Hz filter). Implemented in `src/bmiemg/data/epn612/adaptation.py`.
+- **Decision:** For V2 only the open-source EPN612 dataset is used for training. Its signals are adapted to look like what the model will see once deployed: amplitude scaling and signal resolution (8-bit Myo → 16-bit board ADC range), sampling frequency (200 Hz → board rate by resampling) and the analogue front-end (simulated first-order 20–500 Hz filter). Implemented in `src/bmiemg/data/epn612/adaptation.py`.
 - **Rationale:** In-house data is still scarce and lacks the correct number of channels; training on adapted public data lets the model learn on 612 users while staying in the same numeric domain as the board.
 - **Requirements addressed:** REQ-SW-007
-- **Consequences / limitations:** Information above the 100 Hz source Nyquist cannot be recovered by upsampling, so the adapted data is only an approximation of board data. Its similarity to local recordings must be quantified (signal similarity per task, electrode maps). We can use the incomplete but supersampled in-house data has a way to study this consequence.
+- **Consequences / limitations:** Information above the 100 Hz source Nyquist cannot be recovered by upsampling, so the adapted data is only an approximation of board data. Its similarity to local recordings must be quantified (signal similarity per task, electrode maps). We can use the incomplete but supersampled in-house data as a way to study this consequence.
 
 #### 3.2.3 Train/Test/Val split 70/15/15 balanced by user and movement
 
@@ -202,7 +202,7 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 - **MAKE Archive**: storage for trained models and the in-house recordings used for the signal similarity comparison.
 - **EMG-EPN-612 dataset (Zenodo)**: training data for V2.
 - **V1 decoder** (feature-based TreeOfTrees): the baseline V2 must outperform (REQ-SW-011).
-- **EEG decoding** ([BMI-SOFT-EEG-Decoding](https://github.com/N-Pulse/BMI-SOFT-EEG-Decoding)): parallel modality; may reuse the TCNN and the reduction pipeline. May be used down the line with EMG and some sort of statde machine.
+- **EEG decoding** ([BMI-SOFT-EEG-Decoding](https://github.com/N-Pulse/BMI-SOFT-EEG-Decoding)): parallel modality; may reuse the TCNN and the reduction pipeline. May be used down the line with EMG and some sort of state machine.
 
 ### 3.4 Performance budgets and design margins
 
