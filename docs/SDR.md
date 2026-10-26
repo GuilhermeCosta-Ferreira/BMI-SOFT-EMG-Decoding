@@ -122,7 +122,7 @@ The design aims at a decoder that is (1) accurate enough on a small gesture set,
 
 ### 3.1 Solution overview
 
-The main concept for V2 is to replace the V1 hand-crafted feature + classical classifier pipeline with an **end-to-end Temporal CNN (TCNN)** based on Atzori et al. (2016), trained on the **EMG-EPN-612 open-source dataset adapted to the deployment board's acquisition domain**. The model is first evaluated as a raw baseline (150 ms windows, no software preprocessing), then improved through a controlled preprocessing study, and finally **reduced for the embedded target** following the Wang et al. (2020) pipeline (sampling rate, window size, channel silencing, quantisation). In parallel, a **science track** studies the learned CNN filters to understand and later improve the architecture.
+The main concept for V2 is to replace the V1 hand-crafted feature + classical classifier pipeline with an **end-to-end Temporal CNN (TCNN)** based on Atzori et al. (2016), trained on the **EMG-EPN-612 open-source dataset adapted to the deployment board's acquisition domain**. EPN612 is a stepping stone: it lets us build, train and understand a first implementation of the model now, so that the pipeline is ready once the Data Acquisition team has collected enough in-house recordings with our own gesture set. The EPN-trained model is then meant to be fine-tuned on in-house data rather than retrained from scratch. The model is first evaluated as a raw baseline, then improved through a controlled preprocessing study, and finally **reduced for the embedded target** following the Wang et al. (2020) pipeline (sampling rate, window size, channel silencing, quantisation). In parallel, a **science track** studies the learned CNN filters to understand and later improve the architecture.
 
  ![figure](v2_diagram.png)
 
@@ -142,7 +142,7 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 - **Decision:** For V2 only the open-source EPN612 dataset is used for training. Its signals are adapted to look like what the model will see once deployed: amplitude scaling and signal resolution (8-bit Myo → 16-bit board ADC range), sampling frequency (200 Hz → board rate by resampling) and the analogue front-end (simulated first-order 20–500 Hz filter). Implemented in `src/bmiemg/data/epn612/adaptation.py`.
 - **Rationale:** In-house data is still scarce and lacks the correct number of channels; training on adapted public data lets the model learn on 612 users while staying in the same numeric domain as the board.
 - **Requirements addressed:** REQ-SW-007
-- **Consequences / limitations:** Information above the 100 Hz source Nyquist cannot be recovered by upsampling, so the adapted data is only an approximation of board data. Its similarity to local recordings must be quantified (signal similarity per task, electrode maps). We can use the incomplete but supersampled in-house data as a way to study this consequence.
+- **Consequences / limitations:** Information above the 100 Hz source Nyquist cannot be recovered by upsampling, so the adapted data is only an approximation of board data. The EPN gesture set also differs slightly from ours, so the output layer will have to be adapted when moving to in-house data. Its similarity to local recordings must be quantified (signal similarity per task, electrode maps). We can use the incomplete but supersampled in-house data as a way to study this consequence.
 
 #### 3.2.3 Train/Test/Val split 70/15/15 balanced by user and movement
 
@@ -153,8 +153,8 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 
 #### 3.2.4 Raw baseline at a locked 150 ms window
 
-- **Decision:** Before any preprocessing or tuning, train and evaluate the TCNN on 150 ms windows, reporting accuracy, Cohen's kappa and F1 score. Trained models are saved to the MAKE Archive and their paths recorded; training curves and model size are reported alongside.
-- **Rationale:** Establishes raw model capacity. 150 ms is not yet a realistic deployment window, but fixing it isolates the effect of the model from the effect of window length.
+- **Decision:** Before any preprocessing or tuning, train and evaluate the TCNN on overlapping 150 ms windows, reporting accuracy, Cohen's kappa and F1 score. Trained models are saved to the MAKE Archive and their paths recorded; training curves and model size are reported alongside.
+- **Rationale:** Establishes raw model capacity. 150 ms is not yet a realistic deployment window, but fixing window and step isolates the effect of the model from the effect of segmentation. We lock the step size to a minimum of 10ms (as the firmware team has constrained that way), but final step size will be adapted to final model inference time. So for early trainning we will lock it at 25 ms step which also augments the training set.
 - **Requirements addressed:** REQ-SW-003, REQ-SW-008, REQ-SW-011
 - **Consequences / limitations:** Performance is expected to be modest at this stage; it is the reference for every later step.
 
@@ -169,10 +169,10 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 
 - **Decision:** Port the model to the board this semester by applying the Wang et al. (2020) reduction pipeline step by step, measuring the impact of each step on performance:
   1. reduce the sampling rate where possible,
-  2. reduce the window size: grid search over 50, 75, 100, 150, 175 and 200 ms,
+  2. reduce the window size: grid search over 50, 75, 100, 150, 175 and 200 ms, crossed with a step-size grid adaptation since the step sets the decision rate and the compute per second on the MCU,
   3. silence the least important channels,
   4. quantise the weights.
-  A robustness score summarising performance across realistic window sizes is defined for this evaluation.
+  A robustness score summarising performance across realistic window and step sizes is defined for this evaluation.
 - **Rationale:** Larger windows are expected to perform better, but real-time prosthesis control needs short windows; the trade-off must be measured. The pipeline is proven for EEGNet on low-power MCUs (more demanding task).
 - **Requirements addressed:** REQ-SW-003, REQ-SW-004, REQ-SW-005
 - **Consequences / limitations:** Each reduction may lose accuracy; deployment itself is owned by the firmware repository.
@@ -199,7 +199,7 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 
 - **In-House EMG Acquisition Hardware**: source of live EMG; defines ADC resolution, sampling rate and the analogue 20–500 Hz first-order filter that the dataset adaptation mimics.
 - **Embedded firmware** ([BMI-EMG-Firmware](https://github.com/N-Pulse/BMI-EMG-Firmware/tree/i2c_adc)): will host the reduced model from step 2.5 and its peripherics.
-- **MAKE Archive**: storage for trained models and the in-house recordings used for the signal similarity comparison.
+- **DAQ team and in-house recordings (MAKE Archive)**: the in-house recordings, acquired with our board and our own gesture set, are the target training data for the decoder. In V2 they are used to measure the domain gap with the adapted EPN612 data; as soon as enough sessions are available they will be used to fine-tune the EPN-trained model and, eventually, to train on our data directly. The ingestion path (XDF → BIDS → loaders) already exists for this (REQ-SW-001). The archive also stores the trained models.
 - **EMG-EPN-612 dataset (Zenodo)**: training data for V2.
 - **V1 decoder** (feature-based TreeOfTrees): the baseline V2 must outperform (REQ-SW-011).
 - **EEG decoding** ([BMI-SOFT-EEG-Decoding](https://github.com/N-Pulse/BMI-SOFT-EEG-Decoding)): parallel modality; may reuse the TCNN and the reduction pipeline. May be used down the line with EMG and some sort of state machine.
@@ -209,9 +209,9 @@ The main concept for V2 is to replace the V1 hand-crafted feature + classical cl
 | Budget | Target | Current estimate / value | Source |
 |---|---|---|---|
 | Inference latency | < 200 ms (REQ-SW-005) | Not measured | Step 2.5 |
-| Window size | Realistic window (25–200 ms tested) | Locked at 150 ms until step 2.5; grid 50–200 ms | V2 plan |
+| Window size / step | Realistic window (25–200 ms tested) | 150 ms window, 25 ms step until step 2.5; then window grid 50–200 ms × step size | V2 plan |
 | Flash | ≤ 2048 KB | Not measured; reduced by channel silencing and quantisation | STM32WBA65RI |
-| SRAM | ≤ 512 KB | Input buffer 8 ch × 300 samples (150 ms at 2 kHz) ≈ 4.8 KB at int16; activations TBD | derived |
+| SRAM | ≤ 512 KB | Circular buffer holding one window, 8 ch × 300 samples (150 ms at 2 kHz, 16-bit) ≈ 4.8 KB; with a 25 ms step only the newest 50 samples per channel are written before each inference, so overlap adds no buffer cost; activations TBD | derived |
 
 > Budgets will be filled with measured values at step 2.5 (OI-05).
 
@@ -386,7 +386,7 @@ Current status: research-use only (RUO) proof of concept; no clinical use. Good-
 | OI-04 | Quantify signal similarity between adapted EPN612 and local recordings; produce electrode maps | EMG team | TBD | Domain gap unknown |
 | OI-05 | Measure latency, Flash and RAM of the reduced model on STM32WBA65RI | EMG team / Firmware | TBD | REQ-SW-004/005 unverified |
 | OI-06 | Update chapter 4 scores with measured accuracy, kappa and F1 | EMG team | TBD | Trade-off stays qualitative |
-| OI-07 | Define the window-size robustness score used in step 2.5 | EMG team | TBD | Window choice not justified |
+| OI-07 | Define the window/step robustness score used in step 2.5 | EMG team | TBD | Window choice not justified |
 | OI-08 | Set up the structured docs base and literature database for the science track | EMG team | TBD | Findings lost between terms |
 
 ---
