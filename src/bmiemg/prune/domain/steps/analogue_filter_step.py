@@ -3,7 +3,8 @@
 # ================================================================
 from dataclasses import dataclass
 from typing import Any, ClassVar, Literal, Self
-from scipy.signal import butter, sosfiltfilt
+
+from scipy.signal import butter, sosfilt, sosfiltfilt
 
 from ..actors import TrialData
 from .prune_step import PruneStep
@@ -22,6 +23,8 @@ class AnalogueFilterStep(PruneStep):
     btype: FilterType
     cutoff: float | tuple[float, float]
     order: int = 1
+    # Causal sosfilt mimics the real front end (and its phase lag) sample by sample.
+    causal: bool = False
 
     @classmethod
     def from_config(cls, data: dict[str, Any]) -> Self:
@@ -54,8 +57,11 @@ class AnalogueFilterStep(PruneStep):
             output="sos",
         )
 
-        # Zero-phase filtering keeps the signal aligned with the markers.
-        filtered = sosfiltfilt(sos, actor.signal_ch, axis=1)
+        if self.causal:
+            filtered = sosfilt(sos, actor.signal_ch, axis=1)
+        else:
+            # Zero-phase filtering keeps the signal aligned with the markers.
+            filtered = sosfiltfilt(sos, actor.signal_ch, axis=1)
         return actor.copy_with(signal_ch=filtered)
 
     def _clamp_cutoff(self, nyquist: float) -> float | tuple[float, float]:
