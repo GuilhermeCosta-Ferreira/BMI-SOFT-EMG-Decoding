@@ -2,17 +2,16 @@
 # 0. Section: IMPORTS
 # ================================================================
 import json
-
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
-from .file_loader import FileLoader
-from .file_loader_registry import FileLoaderRegistry
 from ...domain import DataActor
 from ...domain.actors import TrialData
+from .file_loader import FileLoader
+from .file_loader_registry import FileLoaderRegistry
 
 SECTION = "trainingSamples"  # the only section labelled in both JSON groups
 CHANNEL_NAMES = [f"ch{i}" for i in range(1, 9)]

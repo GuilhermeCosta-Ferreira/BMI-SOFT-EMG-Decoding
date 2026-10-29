@@ -1,14 +1,15 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from tqdm import tqdm
-from pathlib import Path
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
-from .source import Source
+from tqdm import tqdm
+
 from ..domain import DataActor
 from .file_loaders import FileLoaderRegistry
+from .source import Source
 
 
 # ================================================================
