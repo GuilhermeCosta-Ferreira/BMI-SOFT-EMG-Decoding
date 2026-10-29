@@ -1,6 +1,22 @@
 # Download
 
-Layers: `service` (`Downloader`) → `domain` (specs, strategies, registry) → `adapters` (one per source). To add a source, subclass `DownloadStrategy` + `DownloadSpec` under `adapters/` and decorate the strategy with `@Registry.register("<source-name>")`.
+Layers: `service` (`Downloader`) → `domain` (specs, strategies, registry) → `adapters` (one per source). `Registry` subclasses the shared `bmiemg.utils.Registry`.
+
+To add a source, create `adapters/<source>/` with `<source>_specs.py` (a `DownloadSpec` dataclass with `source: ClassVar[str] = "<source-name>"`) and `<source>_strategy.py` (a `DownloadStrategy[<Source>Specs]` decorated with `@Registry.register(<Source>Specs.source)`), re-export both from the folder's and `adapters/__init__.py` so the strategy registers on import, and add an entry script in `scripts/00_download/`.
+
+## EMG-EPN-612 source
+
+Downloads `EMG-EPN612 Dataset.zip` from Zenodo (record `4421500`), checks its size and MD5, then extracts it next to the archive. A valid archive already on disk is not downloaded again. No credentials needed.
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `dest` | required | Local folder for the archive and its extraction |
+| `record_id` | `4421500` | Zenodo record |
+| `filename` | `EMG-EPN612 Dataset.zip` | File of the record to fetch |
+
+```bash
+poetry run python scripts/00_download/download_epn612.py
+```
 
 ## Archive source
 
@@ -15,10 +31,10 @@ Pulls files from EPFL's WebDAV archive (`make-archives.epfl.ch`).
    MAKER_DAV_USER=<your dav user>
    ```
 
-3. Set the remote `url` and local `dest` in `scripts/download/download_archive.py`, then run it (it loads `.env` automatically):
+3. Set the remote `url` and local `dest` in `scripts/00_download/download_archive.py`, then run it (it loads `.env` automatically):
 
    ```bash
-   poetry run python scripts/download/download_archive.py
+   poetry run python scripts/00_download/download_archive.py
    ```
 
 ### Getting the credentials

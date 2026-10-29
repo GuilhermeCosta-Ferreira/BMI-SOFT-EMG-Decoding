@@ -1,4 +1,9 @@
-from .service import Downloader
+# Importing adapters registers every strategy before Downloader looks one up.
 from .adapters import ArchiveSpecs, EPN612Specs
+from .service import Downloader
 
-__all__ = ["Downloader", "ArchiveSpecs", "EPN612Specs"]
+__all__ = [
+    "ArchiveSpecs",
+    "Downloader",
+    "EPN612Specs",
+]
