@@ -222,6 +222,9 @@ package "Dataset Pruner" {
             - MarkerUnificationStep (marker_unification)
             - BuildEpochs (build_epochs)
             - TTVSplitStep (ttv_split)
+            - ResampleStep (resample)
+            - AdcNormalizeStep (adc_normalize)
+            - AdcQuantizeStep (adc_quantize)
         end note
         PruneStep <|-left- PruneStepsNote
 
@@ -283,6 +286,7 @@ package "Dataset Pruner" {
             note as FileLoadersNote
                 Currently implemented file loaders (suffix):
                 - XdfLoader (.xdf)
+                - Epn612JsonLoader (.json)
             end note
             FileLoader <|-- FileLoadersNote
         }
