@@ -22,6 +22,8 @@ class MetadataActor(DataActor):
     directory_structure: str = "bids_local"  # assumes the current archive structure
     protocol_version: int = 0  # 0 is undefined
     signal_type: Signal | None = None
+    # Set by loaders whose sources carry no bids folder layout to derive it from.
+    subject_id: int | None = None
 
     # ================================================================
     # 2. Section: PROPERTIES
@@ -48,6 +50,8 @@ class MetadataActor(DataActor):
 
     @property
     def subject_number(self) -> int | None:
+        if self.subject_id is not None:
+            return self.subject_id
         folder = self.subject_folder
         if folder is not None:
             return int(folder.name[-2:])

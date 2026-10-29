@@ -42,7 +42,7 @@ class Loader:
             for file_suffix, files in files_by_type.items():
                 loader = FileLoaderRegistry.get(file_suffix)
                 for file in tqdm(files, desc="Loading files"):
-                    actors.append(loader.load_file(file))
+                    actors.extend(loader.load_actors(file))
 
         return actors
 
