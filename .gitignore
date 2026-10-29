@@ -232,3 +232,4 @@ docs/diagrams/*.png
 /playground/
 .claude/
 CLAUDE.md
+skills/
