@@ -1,4 +1,5 @@
 from .adc_normalize_step import AdcNormalizeStep
+from .adc_quantize_step import AdcQuantizeStep
 from .analogue_filter_step import AnalogueFilterStep
 from .build_epochs import BuildEpochs
 from .marker_unification_step import MarkerUnificationStep
@@ -13,6 +14,7 @@ from .ttv_split_step import TTVSplitStep
 
 __all__ = [
     "AdcNormalizeStep",
+    "AdcQuantizeStep",
     "AnalogueFilterStep",
     "BuildEpochs",
     "MarkerUnificationStep",
