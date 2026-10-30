@@ -35,13 +35,13 @@ steps:
           phase_map:
             3: "move"
           movement_groups:
-            "no gesture": [1]
             "close hand": [2]
-            "wave in": [3]
-            "wave out": [4]
+            "rotate wrist right": [3]  # waveIn
+            "rotate wrist left": [4]  # waveOut
             "open hand": [5]
             "pinch": [6]
-          special_triggers: {}
+          special_triggers:
+            30001: "undefined"  # noGesture is background (0), like rest in-house
       target:
         phases:
           "undefined": 0
@@ -50,6 +50,11 @@ steps:
           "move": 3
           "return": 4
           "iti": 5
+          "resting state, eyes open": 6
+          "resting state, eyes closed": 7
+          "start LabRecorder": 8
+          "experiment finished": 9
+          "test marker": 10
         movements:
           "undefined": 0
           "open hand": 1
@@ -57,9 +62,6 @@ steps:
           "rotate wrist right": 3
           "rotate wrist left": 4
           "pinch": 5
-          "wave in": 6
-          "wave out": 7
-          "no gesture": 8
 
   - ttv_split:
       train_ratio: 0.7

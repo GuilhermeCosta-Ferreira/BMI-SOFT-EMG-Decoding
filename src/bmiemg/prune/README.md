@@ -130,7 +130,7 @@ Shuffles trials (seeded) into train/val/test, optionally stratified so each subj
 | Class | Suffix | Produces |
 |---|---|---|
 | `XdfLoader` | `.xdf` | `XdfData` |
-| `Epn612JsonLoader` | `.json` | One `TrialData` per EMG-EPN-612 `trainingSamples` trial (8 channels, raw counts). `subject_id` is the `user<N>` number, plus 1000 under `testingJSON`. Markers are raw codes `3000M` (phase 3, `M` = gesture: 1 noGesture, 2 fist, 3 waveIn, 4 waveOut, 5 open, 6 pinch) over the `groundTruth` samples, or the whole trial when there is none (noGesture); `marker_unification` maps them to `XXDD`. `load_file` returns the participant's trials concatenated. |
+| `Epn612JsonLoader` | `.json` | One `TrialData` per EMG-EPN-612 `trainingSamples` trial (8 channels, raw counts). `subject_id` is the `user<N>` number, plus 1000 under `testingJSON`. Markers are raw codes `3000M` (phase 3, `M` = gesture: 1 noGesture, 2 fist, 3 waveIn, 4 waveOut, 5 open, 6 pinch) over the `groundTruth` samples, or the whole trial when there is none (noGesture); `marker_unification` maps them to `XXDD` (in `epn612_adapted_v1`: waveIn → rotate wrist right, waveOut → rotate wrist left, noGesture → background `0`). `load_file` returns the participant's trials concatenated. |
 
 ## 5. Writers
 `Exporter` runs each writer from the protocol's `export:` section on every actor whose `name` matches the writer's `actor`. A writer that finds no matching actor raises `ValueError`. Output goes to `data/dataset/<protocol_name>/`, and every file of one run shares a UTC timestamp suffix.
