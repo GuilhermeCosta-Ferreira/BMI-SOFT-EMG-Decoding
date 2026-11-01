@@ -92,10 +92,6 @@ class TestDownloadStrategyContract:
 # ================================================================
 # 4. Section: Downloader wiring
 # ================================================================
-@pytest.mark.xfail(
-    strict=True,
-    reason="Downloader.run skips strategy.validate (src/bmiemg/download/service)",
-)
 def test_run_validates_then_fetches(fake_strategy) -> None:
     spec = FakeSpec(dest="unused")
     Downloader().run(spec)
