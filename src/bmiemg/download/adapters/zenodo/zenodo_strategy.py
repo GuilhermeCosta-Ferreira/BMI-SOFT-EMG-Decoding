@@ -9,7 +9,7 @@ from tqdm import tqdm
 from pathlib import Path
 from dataclasses import dataclass
 
-from .epn612_specs import EPN612Specs
+from .zenodo_specs import ZenodoSpecs
 from ...domain import DownloadStrategy, Registry
 
 # ================================================================
@@ -22,13 +22,13 @@ REQUEST_TIMEOUT = (30, 300)
 # ================================================================
 # 2. Section: Class definition
 # ================================================================
-@Registry.register(EPN612Specs.source)
+@Registry.register(ZenodoSpecs.source)
 @dataclass
-class EPN612Strategy(DownloadStrategy[EPN612Specs]):
-    def validate(self, spec: EPN612Specs) -> None:
+class ZenodoStrategy(DownloadStrategy[ZenodoSpecs]):
+    def validate(self, spec: ZenodoSpecs) -> None:
         _resolve_file(spec)
 
-    def fetch(self, spec: EPN612Specs) -> None:
+    def fetch(self, spec: ZenodoSpecs) -> None:
         # 1. Resolve the remote file and its integrity metadata
         remote_file = _resolve_file(spec)
         download_url = _download_url(remote_file)
@@ -64,15 +64,18 @@ class EPN612Strategy(DownloadStrategy[EPN612Specs]):
             partial_path.replace(archive_path)
 
         # 4. Extract
+        if not spec.extract:
+            return
+        extract_to = Path(spec.extract_to or destination / archive_path.stem)
         print(f"Extracting {spec.filename} ...")
-        _extract_zip_safely(archive_path, destination / archive_path.stem)
+        _extract_zip_safely(archive_path, extract_to)
         print("Done.")
 
 
 # ──────────────────────────────────────────────────────
 # 2.1 Subsection: Helper Functions
 # ──────────────────────────────────────────────────────
-def _resolve_file(spec: EPN612Specs) -> dict:
+def _resolve_file(spec: ZenodoSpecs) -> dict:
     metadata = _get_metadata(spec.record_id)
     return _find_file(metadata, spec.filename)
 

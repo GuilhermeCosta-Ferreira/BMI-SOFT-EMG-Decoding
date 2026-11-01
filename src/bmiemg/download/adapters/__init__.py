@@ -1,9 +1,9 @@
 from .archive import ArchiveSpecs, ArchiveStrategy
-from .emg_epn_612 import EPN612Specs, EPN612Strategy
+from .zenodo import ZenodoSpecs, ZenodoStrategy
 
 __all__ = [
     "ArchiveSpecs",
     "ArchiveStrategy",
-    "EPN612Specs",
-    "EPN612Strategy",
+    "ZenodoSpecs",
+    "ZenodoStrategy",
 ]
