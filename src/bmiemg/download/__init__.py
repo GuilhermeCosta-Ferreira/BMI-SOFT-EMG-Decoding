@@ -1,4 +1,3 @@
-# Importing adapters registers every strategy before Downloader looks one up.
 from .adapters import ArchiveSpecs, EPN612Specs
 from .service import Downloader
 
