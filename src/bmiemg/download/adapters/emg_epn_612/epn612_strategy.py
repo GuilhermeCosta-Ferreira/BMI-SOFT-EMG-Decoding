@@ -9,8 +9,8 @@ from tqdm import tqdm
 from pathlib import Path
 from dataclasses import dataclass
 
-from ...domain import DownloadStrategy, Registry
 from .epn612_specs import EPN612Specs
+from ...domain import DownloadStrategy, Registry
 
 # ================================================================
 # 1. Section: Constants
@@ -43,7 +43,6 @@ class EPN612Strategy(DownloadStrategy[EPN612Specs]):
         partial_path = archive_path.with_suffix(archive_path.suffix + ".part")
 
         # 3. Download and verify
-        # A valid archive means the dataset was already downloaded and is up-to-date => skip download
         if not _is_valid_file(archive_path, expected_size, expected_checksum):
             actual_checksum = _stream_download(
                 download_url, partial_path, expected_size, spec.filename
@@ -158,8 +157,6 @@ def _extract_zip_safely(archive_path: Path, destination: Path) -> None:
     extraction_root = destination.resolve()
 
     with zipfile.ZipFile(archive_path) as archive:
-        # testzip() could be removed for performance purpose:
-        # probably redundant integrity test, and doubles unzipping time (but negligeable compared to download time).
         corrupt_member = archive.testzip()  # check CRC checksum (zip)
         if corrupt_member is not None:
             raise ValueError(f"Corrupted ZIP member: {corrupt_member}")
