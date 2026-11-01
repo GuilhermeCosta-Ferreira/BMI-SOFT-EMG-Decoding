@@ -2,14 +2,14 @@
 # 0. Section: IMPORTS
 # ================================================================
 import os
-import xml.etree.ElementTree as ET
+import requests
+
+from tqdm import tqdm
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from urllib.parse import quote, unquote, urlparse
-
-import requests
+import xml.etree.ElementTree as ET
 from requests.auth import HTTPBasicAuth
-from tqdm import tqdm
+from urllib.parse import quote, unquote, urlparse
 
 from ...domain import DownloadStrategy, Registry
 from .archive_specs import ArchiveSpecs
@@ -27,8 +27,6 @@ REQUEST_TIMEOUT = (10, 300)
 @Registry.register(ArchiveSpecs.source)
 @dataclass
 class ArchiveStrategy(DownloadStrategy[ArchiveSpecs]):
-    """Mirrors a WebDAV archive folder to local disk."""
-
     def validate(self, spec: ArchiveSpecs) -> None:
         response = requests.request(
             method="PROPFIND",

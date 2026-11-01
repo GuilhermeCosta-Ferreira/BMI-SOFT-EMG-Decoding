@@ -1,8 +1,8 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from dataclasses import dataclass
 from typing import ClassVar
+from dataclasses import dataclass
 
 from ...domain import DownloadSpec
 
@@ -12,8 +12,6 @@ from ...domain import DownloadSpec
 # ================================================================
 @dataclass
 class EPN612Specs(DownloadSpec):
-    """EMG-EPN-612 archive on Zenodo."""
-
     source: ClassVar[str] = "emg-epn-612"
 
     record_id: int = 4421500

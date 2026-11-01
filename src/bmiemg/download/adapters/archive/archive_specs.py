@@ -1,9 +1,9 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from dataclasses import dataclass, field
 from typing import ClassVar
 from urllib.parse import quote
+from dataclasses import dataclass, field
 
 from ...domain import DownloadSpec
 
@@ -13,8 +13,6 @@ from ...domain import DownloadSpec
 # ================================================================
 @dataclass
 class ArchiveSpecs(DownloadSpec):
-    """Folder on the EPFL MAKE WebDAV archive."""
-
     source: ClassVar[str] = "archive-raw"
 
     base_url: ClassVar[str] = "https://make-archives.epfl.ch"

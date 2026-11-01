@@ -1,13 +1,13 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-import hashlib
 import zipfile
-from dataclasses import dataclass
-from pathlib import Path
-
+import hashlib
 import requests
+
 from tqdm import tqdm
+from pathlib import Path
+from dataclasses import dataclass
 
 from ...domain import DownloadStrategy, Registry
 from .epn612_specs import EPN612Specs
@@ -25,8 +25,6 @@ REQUEST_TIMEOUT = (30, 300)
 @Registry.register(EPN612Specs.source)
 @dataclass
 class EPN612Strategy(DownloadStrategy[EPN612Specs]):
-    """Downloads, verifies and extracts the EMG-EPN-612 Zenodo archive."""
-
     def validate(self, spec: EPN612Specs) -> None:
         _resolve_file(spec)
 
@@ -64,8 +62,6 @@ class EPN612Strategy(DownloadStrategy[EPN612Specs]):
                     f"{expected_checksum}, received {actual_checksum}"
                 )
 
-            # Only expose the final filename after all integrity checks pass.
-            # The .part file remains available for diagnosis after a failure.
             partial_path.replace(archive_path)
 
         # 4. Extract
