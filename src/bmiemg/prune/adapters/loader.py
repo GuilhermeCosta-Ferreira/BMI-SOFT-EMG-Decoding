@@ -1,11 +1,11 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from collections import defaultdict
-from dataclasses import dataclass
-from pathlib import Path
-
 from tqdm import tqdm
+
+from pathlib import Path
+from dataclasses import dataclass
+from collections import defaultdict
 
 from ..domain import DataActor
 from .file_loaders import FileLoaderRegistry

@@ -1,8 +1,8 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from abc import ABC, abstractmethod
 from pathlib import Path
+from abc import ABC, abstractmethod
 
 from ...domain import DataActor
 

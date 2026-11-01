@@ -1,10 +1,10 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from dataclasses import dataclass
-from typing import ClassVar
-
 import numpy as np
+
+from typing import ClassVar
+from dataclasses import dataclass
 
 from ..actors import TrialData
 from .prune_step import PruneStep

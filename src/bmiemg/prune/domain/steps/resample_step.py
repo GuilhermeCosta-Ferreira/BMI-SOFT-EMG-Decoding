@@ -1,11 +1,11 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from dataclasses import dataclass
-from fractions import Fraction
-from typing import ClassVar, Literal
-
 import numpy as np
+
+from fractions import Fraction
+from dataclasses import dataclass
+from typing import ClassVar, Literal
 from scipy.signal import resample_poly
 
 from ..actors import TrialData

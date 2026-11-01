@@ -2,15 +2,16 @@
 # 0. Section: IMPORTS
 # ================================================================
 import json
-from pathlib import Path
-from typing import Any
 
 import numpy as np
+
+from typing import Any
+from pathlib import Path
 from numpy.typing import NDArray
 
 from ...domain import DataActor
-from ...domain.actors import TrialData
 from .file_loader import FileLoader
+from ...domain.actors import TrialData
 from .file_loader_registry import FileLoaderRegistry
 
 SECTION = "trainingSamples"  # the only section labelled in both JSON groups

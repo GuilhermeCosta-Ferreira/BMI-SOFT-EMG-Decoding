@@ -1,11 +1,10 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from collections import Counter
-
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
+from collections import Counter
 from bmiemg.prune import DatasetPruner
 from bmiemg.prune.domain.actors import Dataset, DatasetPartition, TrialData
 
