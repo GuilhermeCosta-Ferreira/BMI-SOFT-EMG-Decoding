@@ -10,7 +10,5 @@ from typing import ClassVar
 # ================================================================
 @dataclass
 class DownloadSpec:
-    """Where to download to; `source` selects the strategy."""
-
     source: ClassVar[str]
     dest: str

@@ -9,5 +9,4 @@ from .download_strategy import DownloadStrategy
 # ================================================================
 # 1. Section: Class definition
 # ================================================================
-class Registry(BaseRegistry[DownloadStrategy]):
-    """Download strategies keyed by `DownloadSpec.source`."""
+class Registry(BaseRegistry[DownloadStrategy]): ...
