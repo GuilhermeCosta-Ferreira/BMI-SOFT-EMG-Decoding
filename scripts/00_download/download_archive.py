@@ -2,8 +2,8 @@
 # 0. Section: IMPORTS
 # ================================================================
 import os
-from pathlib import Path
 
+from pathlib import Path
 from dotenv import load_dotenv
 
 from bmiemg.download import ArchiveSpecs, Downloader
