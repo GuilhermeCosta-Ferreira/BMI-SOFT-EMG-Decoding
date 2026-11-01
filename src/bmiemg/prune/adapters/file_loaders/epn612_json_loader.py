@@ -33,15 +33,6 @@ GROUP_OFFSETS = {"trainingJSON": 0, "testingJSON": 1000}
 # ================================================================
 @FileLoaderRegistry.register(".json")
 class Epn612JsonLoader(FileLoader):
-    def load_file(self, path: Path) -> DataActor:
-        trials = self._load_trials(path)
-        first = trials[0]
-        return first.copy_with(
-            signal_ch=np.concatenate([t.signal_ch for t in trials], axis=1),
-            markers=np.concatenate([t.markers for t in trials], axis=1),
-            file_name=path.stem,
-        )
-
     def load_actors(self, path: Path) -> list[DataActor]:
         return list(self._load_trials(path))
 

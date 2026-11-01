@@ -7,9 +7,9 @@ from pathlib import Path
 from dataclasses import dataclass
 from collections import defaultdict
 
+from .source import Source
 from ..domain import DataActor
 from .file_loaders import FileLoaderRegistry
-from .source import Source
 
 
 # ================================================================
