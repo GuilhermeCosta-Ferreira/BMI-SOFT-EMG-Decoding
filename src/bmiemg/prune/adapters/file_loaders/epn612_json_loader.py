@@ -14,10 +14,8 @@ from .file_loader import FileLoader
 from ...domain.actors import TrialData
 from .file_loader_registry import FileLoaderRegistry
 
-SECTION = "trainingSamples"  # the only section labelled in both JSON groups
+SECTION = "trainingSamples"
 CHANNEL_NAMES = [f"ch{i}" for i in range(1, 9)]
-
-# Raw marker code PMMMM read by marker_unification: P = phase digit, MM = gesture.
 MOVE_PHASE = 3
 GESTURE_CODES = {
     "noGesture": 1,
@@ -27,8 +25,6 @@ GESTURE_CODES = {
     "open": 5,
     "pinch": 6,
 }
-
-# Users restart at user1 in each group, so the group offsets the subject id.
 GROUP_OFFSETS = {"trainingJSON": 0, "testingJSON": 1000}
 
 
@@ -37,10 +33,7 @@ GROUP_OFFSETS = {"trainingJSON": 0, "testingJSON": 1000}
 # ================================================================
 @FileLoaderRegistry.register(".json")
 class Epn612JsonLoader(FileLoader):
-    """Read one EMG-EPN-612 participant JSON, one TrialData per trial."""
-
     def load_file(self, path: Path) -> DataActor:
-        # One actor per file: the participant's trials back to back.
         trials = self._load_trials(path)
         first = trials[0]
         return first.copy_with(

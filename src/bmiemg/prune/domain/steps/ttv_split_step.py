@@ -2,15 +2,16 @@
 # 0. Section: IMPORTS
 # ================================================================
 import math
+
+import numpy as np
+
+from numpy.typing import NDArray
 from dataclasses import dataclass
 from typing import ClassVar, Literal
 
-import numpy as np
-from numpy.typing import NDArray
-
-from ..actors import Dataset, DatasetPartition, TrialData
 from .prune_step import PruneStep
 from .step_registry import StepRegistry
+from ..actors import Dataset, DatasetPartition, TrialData
 
 
 # ================================================================
@@ -26,7 +27,6 @@ class TTVSplitStep(PruneStep[TrialData, Dataset]):
     user_balance: bool = False
     movement_balance: bool = False
     seed: int = 0
-    # Assign whole groups to one partition (e.g. subject-disjoint splits).
     group_by: Literal["subject"] | None = None
 
     def __post_init__(self) -> None:

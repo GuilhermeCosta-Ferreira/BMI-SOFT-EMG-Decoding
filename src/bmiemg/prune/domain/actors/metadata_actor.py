@@ -22,7 +22,6 @@ class MetadataActor(DataActor):
     directory_structure: str = "bids_local"  # assumes the current archive structure
     protocol_version: int = 0  # 0 is undefined
     signal_type: Signal | None = None
-    # Set by loaders whose sources carry no bids folder layout to derive it from.
     subject_id: int | None = None
 
     # ================================================================

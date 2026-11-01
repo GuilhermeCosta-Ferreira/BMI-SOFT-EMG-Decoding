@@ -17,8 +17,6 @@ from .step_registry import StepRegistry
 @StepRegistry.register("adc_quantize")
 @dataclass
 class AdcQuantizeStep(PruneStep[TrialData, TrialData]):
-    """Quantize fractional full scale to signed ADC counts of a target device."""
-
     name: ClassVar[str] = "adc_quantize"
     bits: int
 

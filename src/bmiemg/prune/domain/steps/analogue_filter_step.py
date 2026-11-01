@@ -23,13 +23,12 @@ class AnalogueFilterStep(PruneStep):
     btype: FilterType
     cutoff: float | tuple[float, float]
     order: int = 1
-    # Causal sosfilt mimics the real front end (and its phase lag) sample by sample.
     causal: bool = False
 
     @classmethod
     def from_config(cls, data: dict[str, Any]) -> Self:
         cutoff = data["cutoff"]
-        # YAML has no tuples; a list cutoff means a (low, high) pair.
+
         if isinstance(cutoff, list):
             data = {**data, "cutoff": tuple(cutoff)}
         return cls(**data)

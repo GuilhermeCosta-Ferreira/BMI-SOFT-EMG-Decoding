@@ -43,8 +43,6 @@ class ResampleStep(PruneStep[TrialData, TrialData]):
 
         signal = resample_poly(actor.signal_ch, up, down, axis=1, padtype=self.padtype)
 
-        # Markers are labels, not signal: hold each source sample's code, so an
-        # onset at source index i lands on i * up / down.
         n_source = actor.markers.shape[1]
         source_idx = (np.arange(signal.shape[1]) * down) // up
         markers = actor.markers[:, np.minimum(source_idx, n_source - 1)]

@@ -17,8 +17,6 @@ from .step_registry import StepRegistry
 @StepRegistry.register("adc_normalize")
 @dataclass
 class AdcNormalizeStep(PruneStep[TrialData, TrialData]):
-    """Map signed ADC counts to fractional full scale, [-1, 1)."""
-
     name: ClassVar[str] = "adc_normalize"
     bits: int
 
