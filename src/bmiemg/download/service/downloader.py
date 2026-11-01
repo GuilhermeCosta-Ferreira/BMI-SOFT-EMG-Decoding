@@ -3,12 +3,11 @@
 # ================================================================
 from dataclasses import dataclass, field
 
-from ..domain import Registry, DownloadSpec
-
+from ..domain import DownloadSpec, Registry
 
 
 # ================================================================
-# 1. Section: Functions
+# 1. Section: Class definition
 # ================================================================
 @dataclass
 class Downloader:
