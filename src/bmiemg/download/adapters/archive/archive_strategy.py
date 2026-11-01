@@ -45,7 +45,6 @@ class ArchiveStrategy(DownloadStrategy[ArchiveSpecs]):
             )
 
     def fetch(self, spec: ArchiveSpecs) -> None:
-        self.validate(spec)
         auth = _auth(spec)
 
         # 1. Makes sure we have a folder to download to

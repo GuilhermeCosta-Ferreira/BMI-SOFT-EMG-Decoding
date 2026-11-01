@@ -18,5 +18,6 @@ class Downloader:
         source = spec.source
         strategy = self._registry.get(source)
 
-        # 2. Fetch data using selected strategy
+        # 2. Check the source is reachable, then fetch from it
+        strategy.validate(spec)
         strategy.fetch(spec)
