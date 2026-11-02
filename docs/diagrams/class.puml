@@ -326,7 +326,7 @@ package "Dataset Pruner" {
 
 
 '=============================================================================='
-'Models Package (proposal, see src/bmiemg/models/README.md)'
+'Models Package'
 '=============================================================================='
 package "Models" {
     package "Service Layer" #E8F5E9 {
@@ -398,30 +398,19 @@ package "Models" {
         }
 
 
-        abstract class InputStep <<planned>> {
-            + name: ClassVar[str]
+        class WindowConfig <<planned>> {
+            + size_ms: float = 200
+            + step_ms: float = 100
+            + max_per_trial: int | None = 10
+            + only_labelled: bool = True
+            + label_rule: "majority" | "last" = "majority"
+            + classes: list[str] | None
+            + one_vs_all: str | None
 
-            + def from_config(data: dict): InputStep
-            + def apply(actors: list[DataActor]): list[DataActor]
+            + def apply(partition: PartitionData): WindowSet
         }
-        InputStep ..> WindowSet
-
-
-        class InputStepRegistry <<planned>> {
-        }
-        InputStepRegistry --|> Utils.Registry
-        InputStepRegistry ..> InputStep
-
-
-        note as InputStepsNote
-            Planned input steps (YAML key):
-            - NotchStep (notch): freq_hz
-            - WindowStep (window): size_ms, step_ms
-            - TargetStep (target): rule, classes, one_vs_all
-            - FeatureStep (features): names
-            - NormaliseStep (normalise): mode
-        end note
-        InputStep <|-left- InputStepsNote
+        WindowConfig ..> PartitionData
+        WindowConfig ..> WindowSet
 
 
         abstract class Model <<planned>> {
@@ -503,12 +492,12 @@ package "Models" {
             + name: str
             + seed: int
             + dataset: DatasetRef
-            + inputs: Sequence[InputStep]
+            + window: WindowConfig
             + model: Model
             + val_metrics: Sequence[Metric]
             + reports: Sequence[ReportWriter]
         }
-        TrainProtocol o-- InputStep
+        TrainProtocol --> WindowConfig
         TrainProtocol o-- Model
         TrainProtocol o-- Metric
         TrainProtocol --> DatasetRef
@@ -532,12 +521,10 @@ package "Models" {
             + name: str
             + model_key: str
             + model_params: dict
-            + inputs: list[dict]
+            + window: WindowConfig
             + class_labels: list[str]
             + channel_names: list[str]
             + sfreq: float
-            + window_ms: float
-            + step_ms: float
             + seed: int
             + dataset: DatasetRef
             + git_commit: str
@@ -545,6 +532,7 @@ package "Models" {
             + path: Path
         }
         ModelArtifact --> DatasetRef
+        ModelArtifact --> WindowConfig
 
 
         class TrainingReport <<planned>> {
@@ -603,6 +591,7 @@ package "Models" {
         package "Model Implementations" {
             abstract class SklearnModel <<planned>> {
                 + params: dict
+                + features: list[str]
             }
             SklearnModel --|> Model
 
@@ -659,12 +648,12 @@ PartitionData --|> DataActor
 WindowSet --|> DataActor
 Predictions --|> DataActor
 DatasetReader ..> DatasetWriter
-ConfigLoader ..> InputStepRegistry
 ConfigLoader ..> ModelRegistry
 ConfigLoader ..> MetricRegistry
 ConfigLoader ..> SchemeRegistry
 ConfigLoader ..> ReportWriterRegistry
-ModelTrainer ..> InputStep
+ModelTrainer ..> WindowConfig
+ModelEvaluator ..> WindowConfig
 ModelTrainer ..> ReportWriter
 ModelEvaluator ..> Metric
 ModelEvaluator ..> EvaluationScheme
