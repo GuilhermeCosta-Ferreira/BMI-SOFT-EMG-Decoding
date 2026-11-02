@@ -3,8 +3,8 @@
 # ================================================================
 from bmiemg.utils import Registry
 
-from contracts.discovery import registry_keys, temporary_entry
 from contracts.registry_contract import RegistryContract
+from contracts.discovery import registry_keys, temporary_entry
 
 
 # ================================================================

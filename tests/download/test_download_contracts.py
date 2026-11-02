@@ -1,18 +1,16 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
-from typing import ClassVar
-from dataclasses import dataclass
-
 import pytest
 
 import bmiemg.download  # noqa: F401  # registers every strategy
-
+from typing import ClassVar
+from dataclasses import dataclass
 from bmiemg.download import Downloader
 from bmiemg.download.domain import DownloadSpec, DownloadStrategy, Registry
 
-from contracts.assertions import assert_implements, assert_is_dataclass
 from contracts.discovery import generic_arg, registered_type, registry_keys
+from contracts.assertions import assert_implements, assert_is_dataclass
 from contracts.registry_contract import RegistryContract
 
 STRATEGY_KEYS = registry_keys(Registry)
