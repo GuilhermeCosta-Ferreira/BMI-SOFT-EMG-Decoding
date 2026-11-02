@@ -14,7 +14,9 @@ from collections.abc import Iterator
 def registry_entries(registry: type) -> dict[str, type]:
     """Return the live key -> class mapping of any registry family.
 
-    Supports the shared `bmiemg.utils.Registry` (`_entries`) and registries that keep their own dict (download's `_strategies`), so contracts survive a registry swap.
+    Supports the shared `bmiemg.utils.Registry` (`_entries`) and registries
+    that keep their own dict (download's `_strategies`), so contracts survive
+    a registry swap.
     """
     for attr in ("_entries", "_strategies"):
         entries = getattr(registry, attr, None)
