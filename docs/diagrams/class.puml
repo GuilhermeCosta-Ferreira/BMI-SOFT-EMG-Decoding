@@ -420,11 +420,39 @@ package "Models" {
             + def from_config(data: dict, seed: int): Model
             + def fit(train: WindowSet, val: WindowSet | None): TrainingReport
             + def predict(windows: WindowSet): Predictions
-            + def save(dest_dir: Path): None
-            + def load(src_dir: Path): Model
+            + def to_bytes(): bytes
+            + def from_bytes(data: bytes): Model
         }
         Model ..> WindowSet
         Model ..> Predictions
+
+
+        package "Model Implementations" {
+            abstract class SklearnModel <<planned>> {
+                + params: dict
+                + features: list[str]
+            }
+            SklearnModel --|> Model
+
+
+            abstract class TorchModel <<planned>> {
+                + epochs: int
+                + batch_size: int
+                + learning_rate: float
+                + device: str = "auto"
+            }
+            TorchModel --|> Model
+
+
+            note as ModelsNote
+                Planned models (YAML key):
+                - SvmModel (svm): SklearnModel
+                - LogisticRegressionModel (logistic_regression): SklearnModel
+                - DecisionTreeModel (decision_tree): SklearnModel
+                - TcnnModel (tcnn): TorchModel, Atzori 2016
+            end note
+            SklearnModel <|-- ModelsNote
+        }
 
 
         class ModelRegistry <<planned>> {
@@ -456,7 +484,7 @@ package "Models" {
             - ConfusionMatrix (confusion_matrix)
             - FlipsPerSecond (flips_per_second)
         end note
-        Metric <|-left- MetricsNote
+        Metric <|-- MetricsNote
 
 
         abstract class EvaluationScheme <<planned>> {
@@ -479,7 +507,7 @@ package "Models" {
             - PerSubjectScheme (per_subject)
             - PerClassScheme (per_class)
         end note
-        EvaluationScheme <|-left- SchemesNote
+        EvaluationScheme <|-- SchemesNote
 
 
         class DatasetRef <<planned>> {
@@ -586,34 +614,7 @@ package "Models" {
         ArtifactStore ..> ModelRegistry
         ModelTrainer --> ArtifactStore
         ModelEvaluator --> ArtifactStore
-
-
-        package "Model Implementations" {
-            abstract class SklearnModel <<planned>> {
-                + params: dict
-                + features: list[str]
-            }
-            SklearnModel --|> Model
-
-
-            abstract class TorchModel <<planned>> {
-                + epochs: int
-                + batch_size: int
-                + learning_rate: float
-                + device: str = "auto"
-            }
-            TorchModel --|> Model
-
-
-            note as ModelsNote
-                Planned models (YAML key):
-                - SvmModel (svm): SklearnModel
-                - LogisticRegressionModel (logistic_regression): SklearnModel
-                - DecisionTreeModel (decision_tree): SklearnModel
-                - TcnnModel (tcnn): TorchModel, Atzori 2016
-            end note
-            SklearnModel <|-- ModelsNote
-        }
+        ArtifactStore ..> Model
 
 
         package "Report Writers" {

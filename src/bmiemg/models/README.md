@@ -28,10 +28,10 @@ Cluster batch jobs need a single command per run with no interactive input: `scr
 | Layer | Folder | Contents |
 |---|---|---|
 | Service | `service/` | `ModelTrainer` (train circuit) and `ModelEvaluator` (evaluation circuit). They wire the adapters and domain together, with no logic of their own. |
-| Domain | `domain/` | Actors (`PartitionData`, `WindowSet`, `Predictions`), interfaces (`Model`, `Metric`, `EvaluationScheme`), their registries, `WindowConfig` and the pure windowing function, `TrainProtocol`, `EvalProtocol`, `DatasetRef`, `ModelArtifact`, `TrainingReport`, `EvaluationReport`. No I/O. |
-| Adapter | `adapters/` | `DatasetReader` (prune output), `ConfigLoader` (YAML), `ArtifactStore` (save/load artifacts), model implementations (`SklearnModel`, `TorchModel` and their subclasses), `ReportWriter`s. |
+| Domain | `domain/` | Actors (`PartitionData`, `WindowSet`, `Predictions`), interfaces (`Model`, `Metric`, `EvaluationScheme`), their registries and implementations (`SklearnModel`, `TorchModel` and their subclasses), `WindowConfig` and the pure windowing function, `TrainProtocol`, `EvalProtocol`, `DatasetRef`, `ModelArtifact`, `TrainingReport`, `EvaluationReport`. No I/O. |
+| Adapter | `adapters/` | `DatasetReader` (prune output), `ConfigLoader` (YAML), `ArtifactStore` (writes and reads artifact folders), `ReportWriter`s. |
 
-Model implementations sit in `adapters/` rather than `domain/`: they wrap third-party frameworks and serialise weights, which is I/O. The domain only knows the `Model` interface.
+Model implementations sit in `domain/`, like prune steps next to `PruneStep`: `fit` and `predict` are computation, even when they wrap scikit-learn or torch. A model never touches disk. It serialises to and from bytes in memory (`to_bytes`, `from_bytes`), and `ArtifactStore` is the only class that writes or reads the files.
 
 ### Data actors
 All actors subclass prune's `DataActor` (dataclass, `name: ClassVar[str]`, `copy_with`).
@@ -78,14 +78,14 @@ The train/val/test split is prune's `ttv_split`. This package never re-splits. `
 3. `DatasetReader` reads `client/train` and `client/val` into `PartitionData`.
 4. Windowing turns each `PartitionData` into a `WindowSet` with the config's `WindowConfig`.
 5. `Model.fit(train, val)` returns a `TrainingReport` (history, validation scores, fit time, parameter count, size).
-6. `ArtifactStore.save` writes the artifact folder (below), then report writers write the training report next to it.
+6. `ArtifactStore.save` writes the artifact folder (below), taking the weights from `Model.to_bytes()`, then report writers write the training report next to it.
 7. The user uploads the folder to the MAKE Archive and records its path (SDR §3.2.4). An `archive` artifact store can automate this later.
 
 ### INFERENCE / EVALUATION: artifact + data → predictions → report
 `ModelEvaluator().run("<eval_config>")`
 
 1. `ConfigLoader` builds an `EvalProtocol`.
-2. `ArtifactStore.load` rebuilds the `Model` (through `ModelRegistry` and the saved `model_key`) and the `WindowConfig` from `artifact.yaml`. The evaluation config cannot change them, which guarantees train/inference parity.
+2. `ArtifactStore.load` reads the weights file and rebuilds the `Model` with `from_bytes` (class found through `ModelRegistry` and the saved `model_key`) and the `WindowConfig` from `artifact.yaml`. The evaluation config cannot change them, which guarantees train/inference parity.
 3. `DatasetReader` reads each target partition. Channel names and `sfreq` must match the artifact, otherwise `ValueError`.
 4. Windowing → `WindowSet` → `Model.predict` → `Predictions`.
 5. For `client/test` (labels zeroed) predictions are written blind, then joined with `server/test` labels for server-side scoring. Labelled targets are scored directly.
@@ -98,7 +98,7 @@ The artifact is a self-describing folder, `artifacts/models/<train_config>_<time
 |---|---|
 | `artifact.yaml` | `ModelArtifact`: `model_key`, `model_params`, `window` (`WindowConfig`), `class_labels`, `channel_names`, `sfreq`, `seed`, `dataset` (`protocol` + `timestamp`), `git_commit`, `created_at`. |
 | `config.yaml` | The resolved train config, so the run can be reproduced exactly. |
-| `weights.pt` / `model.joblib` | Written by the `Model` itself (`save`). |
+| `weights.pt` / `model.joblib` | `Model.to_bytes()`, written by `ArtifactStore`. |
 | `report/` | Training report files. |
 
 Everything the future reduction stage needs (window and step, channel list, sampling rate, class set, weights) is explicit in `artifact.yaml`, so it can work on the artifact without importing training code beyond `ArtifactStore` and `Model`.
@@ -110,7 +110,7 @@ Every family follows the prune pattern: subclass the interface as a dataclass, r
 
 | Interface | Registry | Method(s) | Planned implementations (key) |
 |---|---|---|---|
-| `Model` | `ModelRegistry` | `from_config(data, seed)`, `fit(train, val) -> TrainingReport`, `predict(windows) -> Predictions`, `save(dir)`, `load(dir)` | `svm`, `logistic_regression`, `decision_tree` (`SklearnModel`, with a `features` field: `rms`, `mav`, `wl`, `zc`, `ssc`), `tcnn` (`TorchModel`, Atzori 2016) |
+| `Model` | `ModelRegistry` | `from_config(data, seed)`, `fit(train, val) -> TrainingReport`, `predict(windows) -> Predictions`, `to_bytes() -> bytes`, `from_bytes(data) -> Model` | `svm`, `logistic_regression`, `decision_tree` (`SklearnModel`, with a `features` field: `rms`, `mav`, `wl`, `zc`, `ssc`), `tcnn` (`TorchModel`, Atzori 2016) |
 | `Metric` | `MetricRegistry` | `score(predictions)` | `accuracy`, `balanced_accuracy`, `cohen_kappa`, `f1` (`average`), `confusion_matrix`, `flips_per_second` |
 | `EvaluationScheme` | `SchemeRegistry` | `split(predictions) -> dict[str, Predictions]` | `pooled`, `per_subject`, `per_class` |
 | `ReportWriter` | `ReportWriterRegistry` | `from_config`, `write(report, dest_dir)` | `json_metrics`, `predictions_csv`, `confusion_plot`, `training_curves` |
@@ -170,8 +170,8 @@ report = ModelEvaluator().run("tcnn_raw_150ms_eval")  # writes reports/...
 | `models/Trainer.py` `Trainer` | `service/model_trainer.py` `ModelTrainer` | No cross-validation inside training; validation uses `client/val`. |
 | `models/Evaluator.py` `Evaluator.cross_validate` | dropped | K-fold CV replaced by prune's fixed split. Could return later as an `EvaluationScheme` if needed. |
 | `models/ModelRegistry.py` `ModelRegistry` | `domain/models/model_registry.py` | Rebuilt on `bmiemg.utils.Registry` with decorator registration. |
-| `models/ClassifierEstimator.py` (Protocol) | `domain/models/model.py` `Model` (ABC) | Adds `save`/`load` and actor-based `fit`/`predict`. |
-| `model_factories/ModelFactory` + `DecisionTreeFactory`, `LogisticRegressionFactory`, `SVMFactory` | `adapters/models/sklearn/` `DecisionTreeModel`, `LogisticRegressionModel`, `SvmModel` | Factory parameters become dataclass fields / YAML keys. |
+| `models/ClassifierEstimator.py` (Protocol) | `domain/models/model.py` `Model` (ABC) | Adds `to_bytes`/`from_bytes` and actor-based `fit`/`predict`. |
+| `model_factories/ModelFactory` + `DecisionTreeFactory`, `LogisticRegressionFactory`, `SVMFactory` | `domain/models/sklearn/` `DecisionTreeModel`, `LogisticRegressionModel`, `SvmModel` | Factory parameters become dataclass fields / YAML keys. |
 | `models/TrainingConfig.py` | `domain/protocols/train_protocol.py` `TrainProtocol` | `random_state` → `seed`; `n_splits`, `scoring`, `shuffle` dropped. |
 | `models/TrainingResults.py` | `ModelArtifact` + `TrainingReport`; `save` → `ArtifactStore` | `predict` moves to `Model`. |
 | `models/evaluation.py` `ClassificationEvaluation`, `evaluate_classification` | `Metric` implementations + `EvaluationReport` | Accuracy, balanced accuracy, confusion matrix, report. |
@@ -181,8 +181,8 @@ report = ModelEvaluator().run("tcnn_raw_150ms_eval")  # writes reports/...
 | `train.py` `_save_results`, `_save_importance_plot` | `json_metrics`, `confusion_plot` report writers | Feature importance: possible `feature_importance` writer for sklearn models. |
 | `train.py` `load_config`, `configs/train.yml`, `configs/epn612_svm.yml` | `ConfigLoader`, `configs/model/train/*.yaml` | `test_size`/`val_size` dropped (prune). `param_grids`/nested CV: open question. |
 | `eval.py` (empty), `configs/eval.yaml` | `ModelEvaluator`, `configs/model/eval/*.yaml` | |
-| `scripts/cnn/cnn.py` `TCNN` | `adapters/models/torch/tcnn.py` | Network module behind `TcnnModel`. |
-| `scripts/cnn/training.py` `fit`, `run_epoch`, `evaluate`, `save_checkpoint`, `build_data_loaders` | `TorchModel` (`fit`, `predict`, `save`) | Generic torch loop shared by future torch models. |
+| `scripts/cnn/cnn.py` `TCNN` | `domain/models/torch/tcnn.py` | Network module behind `TcnnModel`. |
+| `scripts/cnn/training.py` `fit`, `run_epoch`, `evaluate`, `save_checkpoint`, `build_data_loaders` | `TorchModel` (`fit`, `predict`, `to_bytes`); checkpoint files → `ArtifactStore` | Generic torch loop shared by future torch models. |
 | `scripts/cnn/training.py` `TCNNConfig`, `TrainingConfig`; `scripts/cnn/train.py` `ExperimentConfig`, `seed_everything`, `resolve_device`, `checkpoint_path` | `TcnnModel` fields, `TrainProtocol`, `ModelTrainer` seeding, `TorchModel.device`, `ArtifactStore` | |
 | `scripts/evaluation/recog_eval_metrics.py` `prediction_flips_per_second`, `raw_recognition_count` | `flips_per_second` and a `recognition_rate` metric | |
 | `scripts/evaluation/recog_eval_metrics.py` `write_predictions` | `predictions_csv` report writer | |
