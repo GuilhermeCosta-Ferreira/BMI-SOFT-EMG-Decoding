@@ -36,6 +36,8 @@ def test_each_family_has_its_own_entries() -> None:
 
 
 def test_the_same_key_can_live_in_two_families() -> None:
-    with temporary_entry(_ThingRegistry, "shared", _Thing):
-        with temporary_entry(_OtherRegistry, "shared", _Thing):
-            assert _OtherRegistry.get_type("shared") is _Thing
+    with (
+        temporary_entry(_ThingRegistry, "shared", _Thing),
+        temporary_entry(_OtherRegistry, "shared", _Thing),
+    ):
+        assert _OtherRegistry.get_type("shared") is _Thing
