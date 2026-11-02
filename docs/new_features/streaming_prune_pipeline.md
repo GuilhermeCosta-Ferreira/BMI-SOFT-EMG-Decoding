@@ -39,9 +39,9 @@ files ─► ProcessPoolExecutor(max_workers=N)
 scope: ClassVar[Literal["actor", "global"]] = "actor"
 ```
 
-Only `TTVSplitStep` sets `"global"`. No existing step changes. `DatasetPruner` splits the protocol at the first global step: everything before it runs per file in the workers, the global step runs once after all workers are done (collecting `executor.map` results is the barrier). Until a step after a global one actually exists, the pruner raises if anything follows it.
+Only `TTVSplitStep` sets `"global"`. No existing step changes. `DatasetPruner` splits the protocol at its global steps into segments: the actor steps of a segment run per file in the workers, a global step runs once after all workers are done (collecting `executor.map` results is the barrier). See "Several global steps" for how segments chain.
 
-An explicit flag rather than "the last step is global" keeps the rule visible and survives a future global step (e.g. normalisation with train-set statistics).
+An explicit flag rather than "the last step is global" keeps the rule visible and allows global steps in the middle of a protocol (e.g. normalisation with train-set statistics).
 
 ### Phase 1: per-file workers
 
@@ -61,6 +61,34 @@ If a protocol has no global step, workers write their trials straight to the out
 - `group_by: subject` sorts subject keys, so worker order does not matter. The stratified mode shuffles in list order, so records must come back in file order (`executor.map` preserves it).
 - `_hide_markers` moves out of the step: the split returns assignments, and the writer zeroes markers for `client.test` while writing.
 
+### Several global steps
+
+A global step is not a plain `apply` over everything. It has three parts:
+
+1. `summarise(actor) -> summary`, in the worker, per actor: a small record returned with the metadata.
+2. `reduce(summaries) -> params`, once, after the barrier.
+3. `apply_params(actor, params) -> actor`, per actor, at the start of the next segment's workers.
+
+`ttv_split` fits it: summarise = subject and dominant movement, reduce = partition assignment, apply = tag each trial with its partition (the writer reads the tag). A dataset-wide normalisation: summarise = per-channel sum, sum of squares and count, reduce = mean and std, apply = normalise the trial.
+
+A protocol with k global steps runs k + 1 segments:
+
+```
+segment 1: workers read source files → actor steps → summarise → write cache → return records
+global 1:  reduce
+segment 2: workers read cache → apply global 1 → actor steps → summarise → write cache → return records
+...
+last:      writer reads cache → output files
+```
+
+Constraints:
+
+- Each global step costs one extra read and write of the cache.
+- Statistics computed before `ttv_split` include the test set (leakage). A step that should use train-set statistics only must come after the split; its summarise reads the partition tag and skips non-train trials.
+- Summaries must combine exactly from per-actor parts (sums, counts, min/max, sets). Medians or percentiles would need histograms or another pass.
+
+Scope of the first implementation: the segment loop is written for any number of global steps, but only `ttv_split` exists, so in practice there is one barrier and it is the last step.
+
 ### Phase 3: export
 
 `DatasetWriter` reads each partition's trials from the cache by assignment and must stop building one big `Raw` in memory: write each trial to a temporary `*_raw.fif`, open them with `mne.io.read_raw_fif(path, preload=False)`, `mne.concatenate_raws` and `.save()`. MNE then streams the data in chunks. Same files on disk as today.
@@ -69,7 +97,7 @@ The cache folder is removed in a `finally` block (or kept behind a `keep_cache` 
 
 ## Interface changes
 
-- `PruneStep`: `scope` ClassVar, default `"actor"`; `TTVSplitStep.scope = "global"`.
+- `PruneStep`: `scope` ClassVar, default `"actor"`; `TTVSplitStep.scope = "global"`. Global steps implement `summarise`, `reduce` and `apply_params`.
 - `Loader`: `iter_files`.
 - `DatasetPruner`: `max_workers` parameter; a streaming `run_and_export(protocol_name)` (a streaming run cannot return every actor); helpers to split steps at the global one and to run one file. One run timestamp shared by the cache and the writers.
 - `TTVSplitStep`: accepts metadata records; no marker hiding.
@@ -87,14 +115,14 @@ The cache folder is removed in a `finally` block (or kept behind a `keep_cache` 
 
 1. Equivalence: on a small fixture dataset, the in-memory path and the streaming path with the same protocol and seed export identical FIF data, channel names, sfreq and partition membership. Main acceptance test.
 2. Scope: for every `"actor"` step, `step.apply(xs) == [y for x in xs for y in step.apply([x])]` on a few actors.
-3. Global step placement: a protocol with a step after `ttv_split` raises.
+3. Segments: a protocol with a fake global step in the middle (e.g. a counting step) gives the same result streamed as in memory, and its summaries reach `reduce` from every actor.
 4. Ordering: with several workers, records reach the global step in file order.
 5. Cleanup: the cache folder is gone after a successful run and after one that raises.
 6. Memory: peak RSS on synthetic large files stays under a bound. Marked slow, never run on a full dataset locally.
 
 ## Suggested order of work
 
-1. Add `scope` to `PruneStep`, mark `TTVSplitStep` global, add the scope and placement tests.
+1. Add `scope` to `PruneStep`, mark `TTVSplitStep` global and split it into `summarise`/`reduce`/`apply_params`, add the scope test.
 2. Add `Loader.iter_files` and the per-file worker with the cache, sequential first.
 3. Make `TTVSplitStep` work on metadata records and move marker hiding to the writer.
 4. Rewrite `DatasetWriter` to write per trial and concatenate lazily; pass the equivalence test.
