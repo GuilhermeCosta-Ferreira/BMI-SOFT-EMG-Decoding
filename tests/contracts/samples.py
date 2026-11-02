@@ -24,9 +24,11 @@ def sample_for(samples: Mapping[str, Any], key: str, table: str) -> Any:
 
 
 def sentinel_instance(cls: type) -> Any:
-    """Build a dataclass instance whose fields hold unique sentinels, skipping __init__.
+    """Build a dataclass instance whose fields hold unique sentinels,
+    skipping __init__.
 
-    Contracts about structure (copy_with, equality of untouched fields) need an instance but not meaningful data.
+    Contracts about structure (copy_with, equality of untouched fields) need
+    an instance but not meaningful data.
     """
     instance = object.__new__(cls)
     for field in dataclasses.fields(cls):
