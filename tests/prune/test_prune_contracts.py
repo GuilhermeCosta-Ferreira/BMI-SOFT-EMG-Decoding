@@ -4,11 +4,10 @@
 import pytest
 import dataclasses
 
+import prune_fakes  # noqa: F401
+import bmiemg.prune  # noqa: F401
+
 from pathlib import Path
-
-import prune_fakes  # noqa: F401  # fakes must honour the DataActor contract too
-import bmiemg.prune  # noqa: F401  # registers every implementation
-
 from bmiemg.prune.adapters.file_loaders import FileLoaderRegistry
 from bmiemg.prune.adapters.exporters import Writer, WriterRegistry
 from bmiemg.prune.domain import DataActor, PruneStep, StepRegistry

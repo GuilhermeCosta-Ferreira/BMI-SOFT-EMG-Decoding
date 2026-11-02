@@ -1,14 +1,13 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+import bmiemg.prune  # noqa: F401
+
 from dataclasses import dataclass
-
-import bmiemg.prune  # noqa: F401  # registers every implementation
-
 from bmiemg.prune.domain import PruneStep, StepRegistry
 from bmiemg.prune.adapters.file_loaders import FileLoaderRegistry
-from bmiemg.prune.adapters.file_loaders.file_loader import FileLoader
 from bmiemg.prune.adapters.exporters import Writer, WriterRegistry
+from bmiemg.prune.adapters.file_loaders.file_loader import FileLoader
 
 from contracts.discovery import registry_keys
 from contracts.registry_contract import RegistryContract

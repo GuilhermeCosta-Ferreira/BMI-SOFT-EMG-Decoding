@@ -1,12 +1,11 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+import pytest
+
 from contextlib import ExitStack
 from collections.abc import Callable, Iterator
 
-import pytest
-
-# Being the rootdir conftest puts tests/ on sys.path, so `contracts` imports as a package.
 from contracts.discovery import temporary_entry
 
 
