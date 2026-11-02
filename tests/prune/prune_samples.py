@@ -1,7 +1,13 @@
-# The only implementation-specific part of the prune contracts: one YAML-shaped config per registered key, as it would appear in configs/prune/*.yaml.
-# Values use the types yaml.safe_load produces (e.g. dates, lists for tuples).
+# ================================================================
+# 0. Section: IMPORTS
+# ================================================================
 from datetime import date
 
+
+
+# ================================================================
+# 1. Section: Sample
+# ================================================================
 STEP_SAMPLE_CONFIGS: dict[str, dict] = {
     "remove_session": {"files_to_remove": ["sub-01_ses-01_task-x_run-01_raw"]},
     "signal_split": {"signal": "emg"},
