@@ -31,6 +31,9 @@ STEP_SAMPLE_CONFIGS: dict[str, dict] = {
     },
     "build_epochs": {"tmin": -0.5, "tmax": 5.0},
     "ttv_split": {"train_ratio": 0.7, "val_ratio": 0.15, "test_ratio": 0.15},
+    "adc_normalize": {"bits": 8},
+    "adc_quantize": {"bits": 12},
+    "resample": {"sfreq": 2000.0, "padtype": "line"},
 }
 
 WRITER_SAMPLE_CONFIGS: dict[str, dict] = {

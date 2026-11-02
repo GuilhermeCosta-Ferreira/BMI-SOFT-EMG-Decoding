@@ -25,12 +25,12 @@ poetry run pytest                                              # everything, leg
 - **Registries** (`StepRegistry`, `FileLoaderRegistry`, `WriterRegistry`, download `Registry`): `RegistryContract`, and prune families do not leak entries into each other.
 - **PruneStep** (each registered key): dataclass, implements `apply` with the base signature, `name` equals the key, `from_config(sample)` builds it, sample keys are dataclass fields, `apply([])` returns a list.
 - **DataActor** (each leaf subclass): dataclass, `name` ClassVar, `copy_with` returns a new instance of the same type with the change applied and the original untouched; names are unique.
-- **FileLoader** (each key): key is a lowercase suffix (`Loader` matches `Path.suffix.lower()`), implements `load_file`, builds without arguments.
+- **FileLoader** (each key): key is a lowercase suffix (`Loader` matches `Path.suffix.lower()`), implements `load_actors`, builds without arguments.
 - **Writer** (each key): dataclass, implements `write`, `name` equals the key, `actor` names a known `DataActor.name`, `from_config(sample, timestamp)` builds it.
 - **DownloadStrategy** (each key): implements `validate` and `fetch`, builds without arguments, is declared as `DownloadStrategy[Spec]` with `Spec` a dataclass whose `source` equals the key.
 - **Services**: `Downloader.run` resolves the strategy from `spec.source` and calls `validate` then `fetch`, unknown sources raise. `DatasetPruner` runs `custom_steps` in order and does not mutate its input. Both use fakes, never the network or data files.
 
-Known violations are kept as `xfail(strict=True)` next to the test, so the suite stays green while they exist and fails as soon as one is fixed, reminding you to drop the marker.
+Tests state the correct behaviour only. A contract violation is fixed in the code, never marked as expected with `xfail`.
 
 ## Adding an implementation
 

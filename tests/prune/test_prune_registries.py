@@ -36,7 +36,7 @@ class TestFileLoaderRegistry(RegistryContract):
 
     def make_entry(self) -> type:
         class Probe(FileLoader):
-            def load_file(self, path):
+            def load_actors(self, path):
                 raise NotImplementedError
 
         return Probe

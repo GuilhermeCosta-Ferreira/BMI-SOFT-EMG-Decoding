@@ -1,20 +1,18 @@
 # ================================================================
 # 0. Section: IMPORTS
 # ================================================================
+import pytest
 import dataclasses
 
 from pathlib import Path
 
-import pytest
-
+import prune_fakes  # noqa: F401  # fakes must honour the DataActor contract too
 import bmiemg.prune  # noqa: F401  # registers every implementation
 
-from bmiemg.prune.domain import DataActor, PruneStep, StepRegistry
 from bmiemg.prune.adapters.file_loaders import FileLoaderRegistry
-from bmiemg.prune.adapters.file_loaders.file_loader import FileLoader
 from bmiemg.prune.adapters.exporters import Writer, WriterRegistry
-
-import prune_fakes  # noqa: F401  # fakes must honour the DataActor contract too
+from bmiemg.prune.domain import DataActor, PruneStep, StepRegistry
+from bmiemg.prune.adapters.file_loaders.file_loader import FileLoader
 
 from contracts.assertions import (
     assert_implements,
@@ -22,16 +20,13 @@ from contracts.assertions import (
     assert_name_classvar,
 )
 from contracts.discovery import leaf_subclasses, registry_keys
-from contracts.samples import init_field_names, sample_for, sentinel_instance
 from prune_samples import STEP_SAMPLE_CONFIGS, WRITER_SAMPLE_CONFIGS
+from contracts.samples import init_field_names, sample_for, sentinel_instance
 
 STEP_KEYS = registry_keys(StepRegistry)
 LOADER_KEYS = registry_keys(FileLoaderRegistry)
 WRITER_KEYS = registry_keys(WriterRegistry)
 ACTORS = leaf_subclasses(DataActor)
-
-# Known violations, tracked so the suite stays green while flagging them; strict xfail fails once fixed, prompting removal.
-ACTORS_MISSING_NAME = {"XdfData", "TrialData"}
 
 
 # ================================================================
@@ -74,9 +69,7 @@ class TestDataActorContract:
     def test_is_a_dataclass(self, cls: type) -> None:
         assert_is_dataclass(cls)
 
-    def test_has_name(self, cls: type, request: pytest.FixtureRequest) -> None:
-        if cls.__name__ in ACTORS_MISSING_NAME:
-            request.applymarker(pytest.mark.xfail(strict=True, reason="no name"))
+    def test_has_name(self, cls: type) -> None:
         assert_name_classvar(cls)
 
     def test_copy_with_returns_a_changed_copy(self, cls: type) -> None:
@@ -114,7 +107,7 @@ class TestFileLoaderContract:
         ), f"FileLoader key {key!r} must be a lowercase file suffix like '.xdf'"
 
     def test_implements_file_loader(self, key: str) -> None:
-        assert_implements(FileLoaderRegistry.get_type(key), FileLoader, ["load_file"])
+        assert_implements(FileLoaderRegistry.get_type(key), FileLoader, ["load_actors"])
 
     def test_builds_without_arguments(self, key: str) -> None:
         assert isinstance(FileLoaderRegistry.get(key), FileLoader)
