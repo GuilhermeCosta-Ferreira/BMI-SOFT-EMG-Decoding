@@ -4,6 +4,7 @@
 import pytest
 
 from bmiemg.prune import DatasetPruner
+from bmiemg.prune.domain import DataActor
 
 from prune_fakes import FakeActor, SeedStep, TraceStep
 
@@ -22,7 +23,7 @@ def test_run_applies_custom_steps_in_order(tmp_path) -> None:
 
 def test_apply_feeds_each_step_the_previous_output() -> None:
     pruner = DatasetPruner(source_name=[])
-    start = [FakeActor()]
+    start: list[DataActor] = [FakeActor()]
 
     actors = pruner.apply(start, [TraceStep("x"), TraceStep("y")])
 
