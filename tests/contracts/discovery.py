@@ -3,45 +3,33 @@
 # ================================================================
 import inspect
 
-from typing import Any, get_args, get_origin
-from contextlib import contextmanager
 from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any, get_args, get_origin
+
+from bmiemg.utils import Registry
 
 
 # ================================================================
 # 1. Section: Registry access
 # ================================================================
-def registry_entries(registry: type) -> dict[str, type]:
-    """Return the live key -> class mapping of any registry family.
-
-    Supports the shared `bmiemg.utils.Registry` (`_entries`) and registries
-    that keep their own dict (download's `_strategies`), so contracts survive
-    a registry swap.
-    """
-    for attr in ("_entries", "_strategies"):
-        entries = getattr(registry, attr, None)
-        if isinstance(entries, dict):
-            return entries
-    raise AssertionError(
-        f"{registry.__name__} exposes no entries dict (_entries or _strategies)"
-    )
+def registry_entries(registry: type[Registry[Any]]) -> dict[str, type]:
+    """Return the live key -> class mapping of a registry family."""
+    return registry._entries
 
 
-def registry_keys(registry: type) -> list[str]:
-    known_keys = getattr(registry, "known_keys", None)
-    keys = known_keys() if callable(known_keys) else registry_entries(registry)
-    return sorted(keys)
+def registry_keys(registry: type[Registry[Any]]) -> list[str]:
+    return sorted(registry.known_keys())
 
 
-def registered_type(registry: type, key: str) -> type:
-    get_type = getattr(registry, "get_type", None)
-    if callable(get_type):
-        return get_type(key)
-    return registry_entries(registry)[key]
+def registered_type(registry: type[Registry[Any]], key: str) -> type:
+    return registry.get_type(key)
 
 
 @contextmanager
-def temporary_entry(registry: type, key: str, target: type) -> Iterator[type]:
+def temporary_entry(
+    registry: type[Registry[Any]], key: str, target: type
+) -> Iterator[type]:
     """Register `target` under `key` through the public API, then remove it."""
     registry.register(key)(target)
     try:
