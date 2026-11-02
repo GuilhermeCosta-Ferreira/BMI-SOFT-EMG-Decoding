@@ -10,17 +10,6 @@
 #SBATCH --output=logs/epn612/%x_%j.log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=CHANGE_ME
-#
-# EPN612 pipeline: download -> prune -> train/evaluate (placeholder).
-#
-# Submit from the repo root (the log dir must exist before submitting):
-#   mkdir -p logs/epn612
-#   sbatch --account=<acct> --partition=<part> --mail-user=<you@example.org> cli/epn612/run.sbatch
-# Run locally: bash cli/epn612/run.sbatch
-# See cli/README.md for CPU-only runs and stage skipping.
-#
-# Stage toggles (environment variables, set to 1 to skip):
-#   SKIP_DOWNLOAD, SKIP_PRUNE, SKIP_TRAIN
 
 set -euo pipefail
 
