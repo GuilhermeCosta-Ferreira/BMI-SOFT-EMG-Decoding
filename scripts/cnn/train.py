@@ -1,6 +1,6 @@
 """Train the TCNN on subject-disjoint EMG-EPN-612 windows.
 
-Run from the repository root with ``poetry run python scripts/cnn/train.py``.
+Run from the repository root with ``poetry run python -m scripts.cnn.train``.
 The complete default experiment is intentionally declared below so a new setup
 can be understood and changed without tracing constants through the codebase.
 """
@@ -19,8 +19,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from epn612.adaptation import BoardAdaptationConfig
-from epn612.dataset import (
+from ..epn612.adaptation import BoardAdaptationConfig
+from ..epn612.dataset import (
     EPN612DatasetConfig,
     WindowConfig,
     build_epn612_datasets,
